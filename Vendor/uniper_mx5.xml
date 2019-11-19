@@ -54,5 +54,5 @@
 				<message type="critical">{{identifier}}: [[{{peerstate}}]] AdminState: {{AdminState}}</message>
 			</output>
 		</item>
-		</items>
+	</items>
 </device>
