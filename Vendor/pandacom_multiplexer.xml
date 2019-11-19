@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<overview>
+		<value name="Name" get-value="1.3.6.1.2.1.1.5"></value>
+		<value name="Location" get-value="1.3.6.1.2.1.1.6"></value>
+		<value name="Uptime" get-value="1.3.6.1.2.1.1.3"></value>
+	</overview>
+	<items>
+		<item title="PowerSupply 1">
+			<values>
+				<value type="get" id="type">1.3.6.1.4.1.3652.3.2.1.6</value>
+				<value type="get" id="state">1.3.6.1.4.1.3652.3.2.1.3</value>
+			</values>
+			<replaces>
+				<replace field="type" value="0">slotEmpty</replace>
+				<replace field="type" value="1">psu230VAC75W</replace>
+				<replace field="type" value="2">psu230VAC160W</replace>
+				<replace field="type" value="3">psu48VDC75W</replace>
+				<replace field="type" value="4">psu48VDC150W</replace>
+				<replace field="type" value="5">psu48VDC60W</replace>
+				<replace field="type" value="6">psu230VAC60W</replace>
+				<replace field="type" value="7">psu48VDC250W</replace>
+				<replace field="type" value="8">psu230VAC250W</replace>
+				<replace field="type" value="254">notDefined</replace>
+				<replace field="type" value="255">notAvailable</replace>
+				<replace field="state" value="0" exitcode="0">notInstalled</replace>
+				<replace field="state" value="1" exitcode="1">fail</replace>
+				<replace field="state" value="2" exitcode="1">temperatureWarning</replace>
+				<replace field="state" value="3" exitcode="0">pass</replace>
+			</replaces>
+			<output>
+				<message>{{type}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="PowerSupply 2">
+			<values>
+				<value type="get" id="type">1.3.6.1.4.1.3652.3.2.1.7</value>
+				<value type="get" id="state">1.3.6.1.4.1.3652.3.2.1.4</value>
+			</values>
+			<replaces>
+				<replace field="type" value="0">slotEmpty</replace>
+				<replace field="type" value="1">psu230VAC75W</replace>
+				<replace field="type" value="2">psu230VAC160W</replace>
+				<replace field="type" value="3">psu48VDC75W</replace>
+				<replace field="type" value="4">psu48VDC150W</replace>
+				<replace field="type" value="5">psu48VDC60W</replace>
+				<replace field="type" value="6">psu230VAC60W</replace>
+				<replace field="type" value="7">psu48VDC250W</replace>
+				<replace field="type" value="8">psu230VAC250W</replace>
+				<replace field="type" value="254">notDefined</replace>
+				<replace field="type" value="255">notAvailable</replace>
+				<replace field="state" value="0" exitcode="0">notInstalled</replace>
+				<replace field="state" value="1" exitcode="1">fail</replace>
+				<replace field="state" value="2" exitcode="1">temperatureWarning</replace>
+				<replace field="state" value="3" exitcode="0">pass</replace>
+			</replaces>
+			<output>
+				<message>{{type}}: [[{{state}}]]</message>
+			</output>
+		</item>
+				<item title="PowerSupply 3">
+			<values>
+				<value type="get" id="type">1.3.6.1.4.1.3652.3.2.1.11</value>
+				<value type="get" id="state">1.3.6.1.4.1.3652.3.2.1.12</value>
+			</values>
+			<replaces>
+				<replace field="type" value="0">slotEmpty</replace>
+				<replace field="type" value="1">psu230VAC75W</replace>
+				<replace field="type" value="2">psu230VAC160W</replace>
+				<replace field="type" value="3">psu48VDC75W</replace>
+				<replace field="type" value="4">psu48VDC150W</replace>
+				<replace field="type" value="5">psu48VDC60W</replace>
+				<replace field="type" value="6">psu230VAC60W</replace>
+				<replace field="type" value="7">psu48VDC250W</replace>
+				<replace field="type" value="8">psu230VAC250W</replace>
+				<replace field="type" value="254">notDefined</replace>
+				<replace field="type" value="255">notAvailable</replace>
+				<replace field="state" value="0" exitcode="0">notInstalled</replace>
+				<replace field="state" value="1" exitcode="1">fail</replace>
+				<replace field="state" value="2" exitcode="1">temperatureWarning</replace>
+				<replace field="state" value="3" exitcode="0">pass</replace>
+			</replaces>
+			<filter>
+				<exclude field="type">notAvailable</exclude>
+				<exclude field="state">notInstalled</exclude>
+			</filter>
+			<output>
+				<message>{{type}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Fangroup">
+			<values>
+				<value type="get" id="state">1.3.6.1.4.1.3652.3.2.3.1.2</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="0" value="0">notAvailable</replace>
+				<replace field="state" exitcode="0" value="1">on</replace>
+				<replace field="state" exitcode="0" value="2">off</replace>
+				<replace field="state" exitcode="0" value="3">pass</replace>
+				<replace field="state" exitcode="1" value="4">failed</replace>
+				<replace field="state" exitcode="0" value="5">notInstalled</replace>
+				<replace field="state" exitcode="0" value="6">auto</replace>
+			</replaces>
+			<output>
+				<message>Fangroup$$: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Slots" test="1.3.6.1.4.1.3652.3.3.2.6.1.9">
+			<values>
+				<value id="Slot" type="get">1.3.6.1.4.1.3652.3.3.2.1.1.2</value>
+				<value id="type" type="get">1.3.6.1.4.1.3652.3.3.2.1.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.3652.3.3.2.1.1.4</value>
+				<value id="AlarmState" type="get">1.3.6.1.4.1.3652.3.3.2.1.1.7</value>
+			</values>
+			<replaces>
+				<replace field="type" value="4">devSpeedSingleLineXFP3R</replace>
+				<replace field="type" value="5">devSpeedSingleLineXFP</replace>
+				<replace field="type" value="255">devunknown</replace>
+				<replace field="state" value="0">running</replace>
+				<replace field="state" value="1">resetSoftware</replace>
+				<replace field="state" value="2">resetConfig</replace>
+				<replace field="state" value="3">resetCAN</replace>
+				<replace field="state" value="4">resetHardware</replace>
+				<replace field="state" value="255">unknown</replace>
+				<replace field="AlarmState" value="0">noAlarm</replace>
+				<replace field="AlarmState" value="1">activeAlarmsH1</replace>
+				<replace field="AlarmState" value="2">cdrAlarmRxP1</replace>
+				<replace field="AlarmState" value="3">activeAlarmsH3</replace>
+				<replace field="AlarmState" value="4">cdrAlarmTxP1</replace>
+				<replace field="AlarmState" value="5">activeAlarmsH5</replace>
+				<replace field="AlarmState" value="6">cdrAlarmRxP1TxP1</replace>
+				<replace field="AlarmState" value="7">activeAlarmsH7</replace>
+				<replace field="AlarmState" value="32">cdrAlarmRxP2</replace>
+				<replace field="AlarmState" value="33">activeAlarmsH33</replace>
+				<replace field="AlarmState" value="34">cdrAlarmRxP2RxP1</replace>
+				<replace field="AlarmState" value="35">activeAlarmsH35</replace>
+				<replace field="AlarmState" value="36">cdrAlarmRxP2TxP1</replace>
+				<replace field="AlarmState" value="37">activeAlarmsH37</replace>
+				<replace field="AlarmState" value="38">cdrAlarmRxP2RxP1TxP1</replace>
+				<replace field="AlarmState" value="39">activeAlarmsH39</replace>
+				<replace field="AlarmState" value="64">cdrAlarmTxP2</replace>
+				<replace field="AlarmState" value="65">activeAlarmsH65</replace>
+				<replace field="AlarmState" value="66">cdrAlarmTxP2RxP1</replace>
+				<replace field="AlarmState" value="67">activeAlarmsH67</replace>
+				<replace field="AlarmState" value="68">cdrAlarmTxP2TxP1</replace>
+				<replace field="AlarmState" value="69">activeAlarmsH69</replace>
+				<replace field="AlarmState" value="70">cdrAlarmTxP2RxP1TxP1</replace>
+				<replace field="AlarmState" value="71">activeAlarmsH71</replace>
+				<replace field="AlarmState" value="96">cdrAlarmRxP2TxP2</replace>
+				<replace field="AlarmState" value="97">activeAlarmsH97</replace>
+				<replace field="AlarmState" value="98">cdrAlarmRxP2TxP2RxP1</replace>
+				<replace field="AlarmState" value="99">activeAlarmsH99</replace>
+				<replace field="AlarmState" value="100">cdrAlarmRxP2TxP2TxP1</replace>
+				<replace field="AlarmState" value="101">activeAlarmsH101</replace>
+				<replace field="AlarmState" value="102">cdrAlarmRxP2TxP2RxP1TxP1</replace>
+				<replace field="AlarmState" value="103">activeAlarmsH103</replace>
+				<replace field="AlarmState" value="255">unknown</replace>
+			</replaces>
+			<checks>
+				<check id="state" type="warning"><![CDATA[ {{state}} != 'running' ]]></check>
+				<check id="AlarmState" type="warning"><![CDATA[ {{AlarmState}} != 'noAlarm' ]]></check>
+			</checks>
+			<output>
+				<message>Slot {{Slot}} ({{type}}): [[state:{{state}}]] - [[AlarmState:{{AlarmState}}]]</message>
+			</output>
+		</item>
+		<item title="Slots" test="1.3.6.1.4.1.3652.3.3.1.1.1.2">
+			<values>
+				<value id="Slot" type="get">1.3.6.1.4.1.3652.3.3.1.1.1.2</value>
+				<value id="type" type="get">1.3.6.1.4.1.3652.3.3.1.1.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.3652.3.3.1.1.1.4</value>
+				<value id="AlarmState" type="get">1.3.6.1.4.1.3652.3.3.1.1.1.7</value>
+			</values>
+			<replaces>
+				<replace field="type" value="0">devSPEEDSINGLELINE</replace>
+				<replace field="type" value="1">devSPEEDDUALLINE</replace>
+				<replace field="type" value="2">devSPEEDDUALLINE3R</replace>
+				<replace field="type" value="3">devSPEEDPROTECT3R</replace>
+				<replace field="type" value="255">devunknown</replace>
+				<replace field="state" value="0">running</replace>
+				<replace field="state" value="1">resetHardware</replace>
+				<replace field="state" value="2">resetConfig</replace>
+				<replace field="state" value="3">resetCAN</replace>
+				<replace field="state" value="4">resetSoftware</replace>
+				<replace field="state" value="255">unknown</replace>
+				<replace field="AlarmState" value="0">noAlarm</replace>
+				<replace field="AlarmState" value="1">activeAlarms</replace>
+				<replace field="AlarmState" value="255">unknown</replace>
+			</replaces>
+			<filter>
+				<exclude field="Slot" wildcard="false">0</exclude>
+			</filter>
+			<checks>
+				<check id="state" type="warning"><![CDATA[ {{state}} != 'running' ]]></check>
+				<check id="AlarmState" type="warning"><![CDATA[ {{AlarmState}} != 'noAlarm' ]]></check>
+			</checks>
+			<output>
+				<message>Slot {{Slot}} ({{type}}): [[state:{{state}}]] - [[AlarmState:{{AlarmState}}]]</message>
+			</output>
+		</item>
+		<item title="Slots" test="1.3.6.1.4.1.3652.3.3.3.1.1.2">
+			<values>
+				<value id="Slot" type="get">1.3.6.1.4.1.3652.3.3.3.1.1.2</value>
+				<value id="type" type="get">1.3.6.1.4.1.3652.3.3.3.1.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.3652.3.3.3.1.1.4</value>
+				<value id="AlarmState" type="get">1.3.6.1.4.1.3652.3.3.3.1.1.8</value>
+			</values>
+			<replaces>
+				<replace field="type" value="0">notAvailable</replace>
+				<replace field="type" value="6">speedDuallineFCXFP</replace>
+				<replace field="type" value="7">speedDuallineFCSFP</replace>
+				<replace field="type" value="8">speedDualline10GXFP</replace>
+				<replace field="type" value="9">speedDualline10GSFP</replace>
+				<replace field="type" value="10">speedDualline16GXFP</replace>
+				<replace field="type" value="11">speedDualline16GSFP</replace>
+				<replace field="type" value="12">speedDualline10GXFP2R</replace>
+				<replace field="type" value="255">unknown</replace>
+				<replace field="state" value="0">notAvailable</replace>
+				<replace field="state" value="1">running</replace>
+				<replace field="state" value="2">resetSoftware</replace>
+				<replace field="state" value="3">resetConfig</replace>
+				<replace field="state" value="4">resetCAN</replace>
+				<replace field="state" value="5">resetHardware</replace>
+				<replace field="state" value="255">unknown</replace>
+				<replace field="AlarmState" value="0">notAvailable</replace>
+				<replace field="AlarmState" value="1">noAlarm</replace>
+				<replace field="AlarmState" value="2">activeAlarms</replace>
+				<replace field="AlarmState" value="255">unknown</replace>
+			</replaces>
+			<checks>
+				<check id="state" type="warning"><![CDATA[ {{state}} != 'running' ]]></check>
+				<check id="AlarmState" type="warning"><![CDATA[ {{AlarmState}} != 'noAlarm' ]]></check>
+			</checks>
+			<output>
+				<message>Slot {{Slot}} ({{type}}): [[state:{{state}}]] - [[AlarmState:{{AlarmState}}]]</message>
+			</output>
+		</item>
+		<item title="Ports" test="1.3.6.1.4.1.3652.3.3.2.6.1.9">
+			<values>
+				<value id="PortPartNumber" type="get">1.3.6.1.4.1.3652.3.3.2.6.1.9</value>
+				<value id="PortDescription" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.4</value>
+				<value id="Slot" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.2</value>
+				<value id="Port" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.3</value>
+				<value id="WavelengthOrg" type="get">1.3.6.1.4.1.3652.3.3.2.6.1.8</value>
+				<value id="Wavelength">$value = trim('{{WavelengthOrg}}');</value>
+				<value id="RXPower" type="get">1.3.6.1.4.1.3652.3.3.2.7.1.4</value>
+				<value id="TXPower" type="get">1.3.6.1.4.1.3652.3.3.2.7.1.5</value>
+				<value id="PartNumber">$value = trim('{{PortPartNumber}}');</value>
+				<value id="Description">$value = trim('{{PortDescription}}');</value>
+				<value id="RXOperState" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.8</value>
+				<value id="TXOperState" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.7</value>
+				<value id="AdminState" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.5</value>
+				<value id="AlarmState" type="get">1.3.6.1.4.1.3652.3.3.2.4.1.9</value>
+			</values>
+			<replaces>
+				<replace field="RXOperState" value="0">down</replace>
+				<replace field="RXOperState" value="1">up</replace>
+				<replace field="RXOperState" text="loop" value="2">loop</replace>
+				<replace field="RXOperState" text="downLLCF" value="3">downLLCF</replace>
+				<replace field="RXOperState" text="downRxFault" value="4">downRXFault</replace>
+				<replace field="RXOperState" text="downRxLevel" value="5">downRXLevel</replace>
+				<replace field="RXOperState" text="bertRunning" value="6">bertRunning</replace>
+				<replace field="RXOperState" text="notAvailable" value="255">notAvailable</replace>
+				<replace field="TXOperState" value="0">down</replace>
+				<replace field="TXOperState" value="1">up</replace>
+				<replace field="TXOperState" text="loop" value="2">loop</replace>
+				<replace field="TXOperState" text="downLLCF" value="3">downLLCF</replace>
+				<replace field="TXOperState" text="downRxFault" value="4">downRXFault</replace>
+				<replace field="TXOperState" text="downRxLevel" value="5">downRXLevel</replace>
+				<replace field="TXOperState" text="bertRunning" value="6">bertRunning</replace>
+				<replace field="TXOperState" text="notAvailable" value="255">notAvailable</replace>
+				<replace field="AdminState" value="0">adminDown</replace>
+				<replace field="AdminState" value="1">adminUp</replace>
+				<replace field="AdminState" value="255">notAvailable</replace>
+				<replace field="AlarmState" value="0">noAlarm</replace>
+				<replace field="AlarmState" value="1">ActiveAlarms</replace>
+				<replace field="AlarmState" value="255">notAvailable</replace>
+			</replaces>
+			<filter>
+				<exclude field="AdminState" wildcard="false">adminDown</exclude>
+				<exclude field="RXPower" wildcard="false">-6000</exclude>
+				<exclude field="TXPower" wildcard="false">-6000</exclude>
+			</filter>
+			<checks>
+				<check id="RXPower" type="warning"><![CDATA[ {{RXPower}} < -3000 ]]></check>
+				<check id="TXPower" type="warning"><![CDATA[ {{TXPower}} < -3000 ]]></check>
+				<check id="RXOperState" type="warning"><![CDATA[ $result = in_array('{{RXOperState}}', array('notAvailable')); ]]></check>
+				<check id="TXOperState" type="warning"><![CDATA[ $result = in_array('{{TXOperState}}', array('notAvailable')); ]]></check>
+				<check id="AdminState" type="warning"><![CDATA[ {{AdminState}} == 'notAvailable' ]]></check>
+				<check id="AlarmState" type="warning"><![CDATA[ {{AlarmState}} == 'notAvailable' || {{AlarmState}} == 'ActiveAlarms' ]]></check>
+				<check id="RXPower" type="critical"><![CDATA[ {{RXPower}} == -4000 ]]></check>
+				<check id="TXPower" type="critical"><![CDATA[ {{TXPower}} == -4000 ]]></check>
+				<check id="RXOperState" type="critical"><![CDATA[ $result = in_array('{{RXOperState}}', array('down','loop','downLLCF', 'downRXFault', 'downRXLevel', 'bertRunning')); ]]></check>
+				<check id="TXOperState" type="critical"><![CDATA[ $result = in_array('{{TXOperState}}', array('down','loop','downLLCF', 'downRXFault', 'downRXLevel', 'bertRunning')); ]]></check>
+			</checks>
+			<output>
+				<message><![CDATA[ <strong>Slot: {{Slot}} (Port: {{Port}}) </strong> - {{PartNumber}}: {{Description}}  / Wave Length: {{Wavelength}} / RXPower: [[RXPower:{{RXPower}}]] TXPower: [[TXPower:{{TXPower}}]] / RXOperState: [[RXOperState:{{RXOperState}}]]  / TXOperState: [[TXOperState:{{TXOperState}}]] / AdminState: [[AdminState:{{AdminState}}]] / AlarmState: [[AlarmState:{{AlarmState}}]] ]]></message>
+			</output>
+		</item>
+		<item title="Ports" test="1.3.6.1.4.1.3652.3.3.1.7.1.1.6">
+			<values>
+				<value id="PortPartNumber" type="get">1.3.6.1.4.1.3652.3.3.1.7.1.1.6</value>
+				<value id="PortDescription" type="get">1.3.6.1.4.1.3652.3.3.1.5.1.4</value>
+				<value id="Slot" type="get">1.3.6.1.4.1.3652.3.3.1.5.1.2</value>
+				<value id="Port" type="get">1.3.6.1.4.1.3652.3.3.1.5.1.3</value>
+				<value id="PartNumber">$value = trim('{{PortPartNumber}}');</value>
+				<value id="Description">$value = htmlspecialchars(trim('{{PortDescription}}'));</value>
+				<value id="WavelengthOrg" type="get">1.3.6.1.4.1.3652.3.3.1.7.1.1.12</value>
+				<value id="Wavelength">$value = trim('{{WavelengthOrg}}');</value>
+				<value id="RXPower" type="get">1.3.6.1.4.1.3652.3.3.1.8.1.4</value>
+				<value id="TXPower" type="get">1.3.6.1.4.1.3652.3.3.1.8.1.6</value>
+				<value id="AdminState" type="get">1.3.6.1.4.1.3652.3.3.1.5.1.5</value>
+				<value id="OperState" type="get">1.3.6.1.4.1.3652.3.3.1.5.1.6</value>
+				<value id="AlarmState" type="get">1.3.6.1.4.1.3652.3.3.1.5.1.12</value>
+			</values>
+			<replaces>
+				<replace field="OperState" value="0">down</replace>
+				<replace field="OperState" value="1">up</replace>
+				<replace field="OperState" text="loop" value="2">loop</replace>
+				<replace field="OperState" text="downLLCF" value="3">downLLCF</replace>
+				<replace field="AdminState" value="0">adminDown</replace>
+				<replace field="AdminState" value="1">adminUp</replace>
+				<replace field="AdminState" value="255">notAvailable</replace>
+				<replace field="AlarmState"  value="0">noAlarm</replace>
+				<replace field="AlarmState"  value="1">alarmLOS</replace>
+				<replace field="AlarmState"  value="2">alarmCDR</replace>
+				<replace field="AlarmState"  value="3">alarmTxFault</replace>
+				<replace field="AlarmState"  value="4">alarmRxLevel</replace>
+				<replace field="AlarmState"  value="5">warningRxLevel</replace>
+				<replace field="AlarmState"  value="6">warningTxLevel</replace>
+				<replace field="AlarmState"  value="16">activeAlarms</replace>
+				<replace field="AlarmState"  value="32">activeWarnigs</replace>
+				<replace field="AlarmState"  value="255">notAvailable</replace>
+			</replaces>
+			<filter>
+				<exclude field="AdminState" wildcard="false">adminDown</exclude>
+				<exclude field="RXPower" wildcard="false">-6000</exclude>
+				<exclude field="TXPower" wildcard="false">-6000</exclude>
+			</filter>
+			<checks>
+				<check id="RXPower" type="warning"><![CDATA[ {{RXPower}} < -3000 ]]></check>
+				<check id="TXPower" type="warning"><![CDATA[ {{TXPower}} < -3000 ]]></check>
+				<check id="OperState" type="warning"><![CDATA[ $result = in_array('{{OperState}}', array('notAvailable')); ]]></check>
+				<check id="AdminState" type="warning"><![CDATA[ {{AdminState}} == 'notAvailable' ]]></check>
+				<check id="AlarmState" type="warning"><![CDATA[ {{AlarmState}} == 'notAvailable' || {{AlarmState}} == 'ActiveAlarms' ]]></check>
+				<check id="RXPower" type="critical"><![CDATA[ {{RXPower}} == -4000 ]]></check>
+				<check id="TXPower" type="critical"><![CDATA[ {{TXPower}} == -4000 ]]></check>
+				<check id="OperState" type="critical"><![CDATA[ $result = in_array('{{OperState}}', array('down','loop')); ]]></check>
+			</checks>
+			<output>
+				<message><![CDATA[ <strong>Slot: {{Slot}} (Port: {{Port}}) </strong> - {{PartNumber}}: {{Description}}  / Wave Length: {{Wavelength}} / RXPower: [[RXPower:{{RXPower}}]] TXPower: [[TXPower:{{TXPower}}]] / OperState: [[OperState:{{OperState}}]] / AdminState: [[AdminState:{{AdminState}}]] / AlarmState: [[AlarmState:{{AlarmState}}]] ]]></message>
+			</output>
+		</item>
+		<item title="Ports" test="1.3.6.1.4.1.3652.3.3.3.5.1.5">
+			<values>
+				<value id="PortPartNumber" type="get">1.3.6.1.4.1.3652.3.3.3.5.1.5</value>
+				<value id="PortDescription" type="get">1.3.6.1.4.1.3652.3.3.3.4.1.4</value>
+				<value id="Slot" type="get">1.3.6.1.4.1.3652.3.3.3.4.1.2</value>
+				<value id="Port" type="get">1.3.6.1.4.1.3652.3.3.3.4.1.3</value>
+				<value id="PartNumber">$value = trim('{{PortPartNumber}}');</value>
+				<value id="Description">$value = trim('{{PortDescription}}');</value>
+				<value id="WavelengthOrg" type="get">1.3.6.1.4.1.3652.3.3.3.5.1.9</value>
+				<value id="Wavelength">$value = trim('{{WavelengthOrg}}');</value>
+				<value id="RXLevel" type="get">1.3.6.1.4.1.3652.3.3.3.7.1.4</value>
+				<value id="TXLevel" type="get">1.3.6.1.4.1.3652.3.3.3.7.1.5</value>
+				<value id="AdminState" type="get">1.3.6.1.4.1.3652.3.3.3.4.1.5</value>
+				<value id="OperState" type="get">1.3.6.1.4.1.3652.3.3.3.4.1.6</value>
+				<value id="AlarmState" type="get">1.3.6.1.4.1.3652.3.3.3.4.1.11</value>
+			</values>
+			<replaces>
+				<replace field="OperState" value="0">down</replace>
+				<replace field="OperState" value="1">up</replace>
+				<replace field="OperState" text="loop" value="2">loop</replace>
+				<replace field="OperState" text="downLLCF" value="3">downLLCF</replace>
+				<replace field="OperState" text="downRxFault" value="4">downRXFault</replace>
+				<replace field="OperState" text="downRxLevel" value="5">downRXLevel</replace>
+				<replace field="OperState" text="bertRunning" value="6">bertRunning</replace>
+				<replace field="OperState" text="notAvailable" value="255">notAvailable</replace>
+				<replace field="AdminState" value="0">notAvailable</replace>
+				<replace field="AdminState" value="1">adminDown</replace>
+				<replace field="AdminState" value="2">adminUp</replace>
+				<replace field="AdminState" value="255">notAvailable</replace>
+				<replace field="AlarmState" value="0">notAvailable</replace>
+				<replace field="AlarmState" value="1">noAlarms</replace>
+				<replace field="AlarmState" value="2">ActiveAlarms</replace>
+				<replace field="AlarmState" value="255">unknown</replace>
+			</replaces>
+			<filter>
+				<exclude field="AdminState" wildcard="false">adminDown</exclude>
+				<exclude field="RXLevel" wildcard="false">-6000</exclude>
+				<exclude field="TXLevel" wildcard="false">-6000</exclude>
+			</filter>
+			<checks>
+				<check id="RXLevel" type="warning"><![CDATA[ {{RXLevel}} < -3000 || ({{RXLevel}} < -1400 && strpos('{{PortPartNumber}}', 'S16') !== false)]]></check>
+				<check id="TXLevel" type="warning"><![CDATA[ {{TXLevel}} < -3000 || ({{TXLevel}} < -1400 && strpos('{{PortPartNumber}}', 'S16') !== false)]]></check>
+				<check id="AdminState" type="warning"><![CDATA[ {{AdminState}} == 'notAvailable' ]]></check>
+				<check id="AlarmState" type="warning"><![CDATA[ {{AlarmState}} == 'notAvailable' || {{AlarmState}} == 'ActiveAlarms' ]]></check>
+				<check id="RXLevel" type="critical"><![CDATA[ {{RXLevel}} == -4000 ]]></check>
+				<check id="TXLevel" type="critical"><![CDATA[ {{TXLevel}} == -4000 ]]></check>
+			</checks>
+			<output>
+				<message><![CDATA[ <strong>Slot: {{Slot}} (Port: {{Port}}) </strong> - {{PartNumber}}: {{Description}}  / Wave Length: {{Wavelength}} / RXLevel: [[RXLevel:{{RXLevel}}]] TXLevel: [[TXLevel:{{TXLevel}}]] / AdminState: [[AdminState:{{AdminState}}]] / AlarmState: [[AlarmState:{{AlarmState}}]]]]></message>
+			</output>
+		</item>
+		
+	</items>
+</device>

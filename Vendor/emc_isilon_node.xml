@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5.0</value>
+		<value name="Location">1.3.6.1.2.1.1.6.0</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="SN">1.3.6.1.4.1.12124.2.51.1.3</value>
+	</overview>
+	<items>
+		<item title="NodeHealth" test="1.3.6.1.4.1.12124.2.1.1">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.2.1.1</value>
+				<value id="state" type="get">1.3.6.1.4.1.12124.2.1.2</value>
+				<value id="type" type="get">1.3.6.1.4.1.12124.2.1.3</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="0" value="0">ok</replace>
+				<replace field="state" exitcode="1" value="1">attn</replace>
+				<replace field="state" exitcode="2" value="2">down</replace>
+				<replace field="state" exitcode="2" value="3">invalid</replace>
+				<replace field="type" value="0">storage</replace>
+				<replace field="type" value="1">accelerator</replace>
+			</replaces>
+			<output>
+				<message>{{name}} ({{type}}) : [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="NodeState" test="1.3.6.1.4.1.12124.2.1.1">
+			<values>
+				<value id="readonly" type="get">1.3.6.1.4.1.12124.2.1.4</value>
+			</values>
+			<replaces>
+				<replace field="readonly" exitcode="0" value="0">no</replace>
+				<replace field="readonly" exitcode="0" value="1">yes</replace>
+			</replaces>
+			<output>
+				<message>Readonly: [[{{readonly}}]]</message>
+			</output>
+		</item>
+		<item title="Fans">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.2.53.1.2</value>
+				<value id="description" type="get">1.3.6.1.4.1.12124.2.53.1.3</value>
+				<value id="speed" type="get">1.3.6.1.4.1.12124.2.53.1.4</value>	
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{speed}} < 1000 ]]></check>
+			</checks>
+			<output>
+				<message>{{description}} : [[{{speed}}]] rpm</message>
+			</output>		
+		</item>
+		<item title="Temperature Sensors">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.2.54.1.2</value>
+				<value id="description" type="get">1.3.6.1.4.1.12124.2.54.1.3</value>
+				<value id="temperature" type="get">1.3.6.1.4.1.12124.2.54.1.4</value>
+				<value id="temp">round({{temperature}}, 0)</value>
+			</values>
+			<filter>
+				<exclude field="name" wildcard="true">P1 *</exclude>
+			</filter>
+			<checks>
+				<check type="warning"><![CDATA[ {{temp}} > 68 ]]></check>
+			</checks>
+			<output>
+				<message>{{description}} : [[{{temp}}]] ° celsius</message>
+			</output>		
+		</item>
+		<item title="PowerSupply Sensors">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.2.55.1.2</value>
+				<value id="desc" type="get">1.3.6.1.4.1.12124.2.55.1.3</value>
+				<value id="watt" type="get">1.3.6.1.4.1.12124.2.55.1.4</value>
+				<value id="round">round({{watt}}, 2)</value>
+			</values>
+			<filter>
+				<include field="name" wildcard="true">vacps*</include>
+				<include field="name" wildcard="true">*Input*</include>
+				<include field="name" wildcard="true">PS IN*</include>
+			</filter>
+			<checks>
+				<check type="warning"><![CDATA[ {{watt}} < 60 ]]></check>
+			</checks>
+			<output>
+				<message>{{name}} ({{desc}}) : [[{{round}}]] Watt</message>
+			</output>		
+		</item>
+		<item title="Disks">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.2.52.1.4</value>
+				<value id="state" type="get">1.3.6.1.4.1.12124.2.52.1.5</value>
+				<value id="sn" type="get">1.3.6.1.4.1.12124.2.52.1.7</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="0" value="HEALTHY">healthy</replace>
+				<replace field="state" exitcode="0" value="L3">L3 caching</replace>
+				<replace field="state" exitcode="1" value="DEAD">dead</replace>
+				<replace field="state" exitcode="1" value="SMARTFAIL">smartfail</replace>
+			</replaces>
+			<output>
+				<message>{{name}} ({{sn}}) : [[{{state}}]]</message>
+			</output>		
+		</item>
+	</items>
+</device>

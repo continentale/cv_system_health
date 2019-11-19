@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5.0</value>
+		<value name="Location">1.3.6.1.2.1.1.6.0</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="Vendorstring">1.3.6.1.2.1.1.2.0</value>
+	</overview>
+</device>

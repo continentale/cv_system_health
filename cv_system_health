@@ -1,0 +1,1608 @@
+#!/usr/bin/php
+<?php
+/**
+ * @package   cv_system_health
+ * @copyright cv_system_health contributors
+ * @license   GNU Affero General Public License (https://www.gnu.org/licenses/agpl-3.0.de.html)
+ * 
+ * @todo lots of documentation
+ * 
+ * system requirements: php with modules php_snmp enabled
+ * 
+ * this nagios / icinga / naemon compliant check is designed to create snmp based checks for various snmp devices.
+ * the main goal was to create a highly modular check wich can be extended via simple xml files 
+ */
+
+$device = new Device();
+
+class Device 
+{
+	private $cn;
+	private $output;
+	
+	public $device;
+	public $check;
+
+	protected $params;
+
+	private $session;
+	private $Vendor;
+	private $compare;
+
+	public function __construct()
+	{
+		$this->params = $this->_getParams(); 
+		$this->session = $this->_initSNMPSession($this->params);
+		$this->check['status'] = 0;
+
+		if ($this->params['xml'])
+			$vendorfile = $this->_loadCustomXML((string) $this->params['xml']);
+		else
+			$vendorfile = $this->_loadVendorXML();
+
+		// load Mibs ?
+		if ($vendorfile->mibs && $vendorfile->mibs->children())
+			$this->_loadMibs($vendorfile->mibs);
+
+		if (isset($vendorfile['output']) && $vendorfile['output']== 'full')
+			$this->output['format'] = 'full';
+		else
+			$this->output['format'] = 'stacked';
+		
+		if ($vendorfile->url)
+		{
+			$this->_setURL($vendorfile);
+		}
+
+		$this->device['name'] = @$this->session->get('1.3.6.1.2.1.1.5.0');
+
+		if ($vendorfile->status)
+		{
+			if ($vendorfile->status->ok)
+				$this->check['message'][0] = str_replace('{{hostname}}', $this->device['name'],(string) $vendorfile->status->ok);
+			else
+				$this->check['message'][0] = 'OK: ' . $this->device['name'] . ' is healthy.';
+			
+			if ($vendorfile->status->warning)
+				$this->check['message'][1] = str_replace('{{hostname}}', $this->device['name'],(string) $vendorfile->status->warning);
+			else
+				$this->check['message'][1] = 'WARNING: ' . $this->device['name'] . ' reported problems. Please check details...';
+			
+			if ($vendorfile->status->critical)
+				$this->check['message'][2] = str_replace('{{hostname}}', $this->device['name'],(string) $vendorfile->status->critical);
+			else
+				$this->check['message'][2] = 'CRITICAL: ' . $this->device['name'] . ' reported problems. Please check details...';
+		}
+		elseif($vendorfile->message)
+		{
+			$this->check['message'][0] = str_replace('{{hostname}}', $this->device['name'],(string) $vendorfile->message['ok']);
+			$this->check['message'][1] = str_replace('{{hostname}}', $this->device['name'],(string) $vendorfile->message['warn']);
+			$this->check['message'][2] = str_replace('{{hostname}}', $this->device['name'],(string) $vendorfile->message['crit']);
+		}
+		
+		else
+		{
+			$this->check['message'][0] = 'OK: ' . $this->device['name'] . ' is heathy.';
+			$this->check['message'][1] = 'WARNING: ' . $this->device['name'] . ' reported problems. Please check details...';
+			$this->check['message'][2] = 'CRITICAL: ' . $this->device['name'] . ' reported problems. Please check details...';
+		}
+		
+		if ($vendorfile->overview)
+		{
+			foreach($vendorfile->overview->children() as  $ov)
+			{
+				$link = false;
+				$links = array();
+				
+				if (isset($ov['get-value']))
+				{
+					$this->device['overview'][(string) $ov['name']] = @$this->session->walk($ov['get-value']);
+				}
+				else
+				{
+					if (isset($ov['url']) && $ov['url'] == true)
+					{	
+						$link =  @$this->session->walk($ov);
+						foreach ($link as $key => $value)
+						{
+							$links[$key] = '<a href="'. $value . '" style="color: #5f6268;"  target="_blank">' . $value. '</a>';
+						}
+						$this->device['overview'][(string) $ov['name']] = $links;
+					}
+					else
+					{
+						$tmp = false;
+						$tmp = @$this->session->walk($ov);
+						if (empty($tmp))
+							continue;
+						else
+							$this->device['overview'][(string) $ov['name']] = $tmp;
+					}
+				}
+			}
+		}
+
+		if ($vendorfile->items)
+		{
+			$data = array();
+			$ndata = array();
+
+			$fields = array();
+			$grp = 1;
+			$index = false;
+			foreach ($vendorfile->items as $collection)
+			{
+				foreach ($collection->item as $item)
+				{
+					$group = false;
+					$hide = false;
+					$stacked = false;
+					$addtoheader = false;
+					$data = array();
+					$_data = array();
+					$fields = array();
+					$title = (string) $item['title'];
+					$warnings = array();
+					$comp_warnings = array();
+					$comp_criticals = array();
+					$criticals = array();
+					$states = array();
+					$ignores = array();
+					$filter = array();
+					$gpindex = array();
+					$group_key = false;
+					$group_title = false;
+					$force_numeric = false;
+					$cut_index = false;
+					$use_key = false;
+
+					if (isset($item['test']))
+					{
+						$test = @$this->session->walk($item['test'], true);
+
+						if(empty($test))
+							continue;
+					}
+
+					if (isset($item['hide']) && $item['hide'] == true )
+						$hide = true;
+					if (isset($item['stacked']) && $item['stacked'] == true )
+						$stacked = true;
+
+					foreach ($item->values->value as $v)
+					{
+						if(isset($v['type']) && $v['type'] == 'get')
+						{
+							$_data[(string) $v['id']] =  array(
+								'key' => isset($v['key']) ? (string) $v['key'] : false,
+								'index' => isset($v['index']) ? (string) $v['index'] : false,
+								'compare' => isset($v['compare']) ? true : false,
+								'value' => isset($v['hex'])? array_to_hex(@$this->session->walk($v, true)) : @$this->session->walk($v, true),
+							);
+						}
+						else
+							$fields[(string) $v['id']] = (string) $v;
+					}
+
+					if ($item->replaces)
+					{ 
+						foreach ($item->replaces as $state)
+						{
+							foreach ($state as $skey => $svalue)
+							{
+								$states[(string) $svalue['field']][(string) $svalue['value']] = array(
+									'field' => (string) $svalue['field'],
+									'value' => (string) $svalue['value'],
+									'replace' => (string) $svalue,
+									'exit_code' => isset($svalue['exitcode']) ? (int) $svalue['exitcode'] : false,
+								);
+							}
+						}
+					}
+
+					if ($item->checks)
+					{
+						foreach ($item->checks->check as $cindex => $c)
+						{
+							if ($c['type'] == 'warning')
+								$warnings[] = array(
+									'id' => isset($c['id']) ? (string) $c['id'] : '',
+									'criteria' => (string) $c,
+								);
+
+							if ($c['type'] == 'critical')
+								$criticals[] = array(
+									'id' => isset($c['id']) ? (string) $c['id'] : '',
+									'criteria' => (string) $c,
+								);
+						}
+					}
+
+					if ($item->compares)
+					{
+						foreach ($item->compares->compare as $cindex => $c)
+						{
+							if ($c['type'] == 'warning')
+								$comp_warnings[] = array(
+									'id' => isset($c['id']) ? (string) $c['id'] : '',
+									'criteria' => (string) $c,
+								);
+							if ($c['type'] == 'critical')
+								$comp_criticals[] = array(
+									'id' => isset($c['id']) ? (string) $c['id'] : '',
+									'criteria' => (string) $c,
+								);
+						}
+					}
+
+					foreach ($_data as $key => $value)
+					{
+						$para = false;
+						$_key = false;
+						$compare = false;
+
+						foreach ($value as $k => $v)
+						{
+							if ($k == 'compare')
+								$compare = $v;
+
+							if ($k == 'index')
+								$para = $v;
+
+							if ($k == 'key')
+								$_key = $v;
+
+							if ($k == 'value')
+							{
+								if (is_array($v))
+								{
+									foreach ($v as $ki => $vi)
+									{
+										if ($para)
+										{
+											$ki = $ki . $para;
+
+											@eval( '$result = (' . $ki . ');' );
+											$ki = $result;
+										}
+										if ($_key)
+										{
+											$_keys = explode('.', $ki);
+											$t = end($_keys);
+
+											if ($_key == $t)
+												$data[$key][$ki] = $vi;
+											else
+												continue;
+										}
+										else
+											$data[$key][$ki] = $vi;
+										
+										if ($compare)
+											$this->compare[$key][] = $vi;
+									}
+								}
+							}
+						}
+					}
+
+					$filter = $this->_getFilterItems($item->filter);
+					$ignores = $this->_getFilterItems($item->ignores);
+
+					foreach ($data as $dkey => $dvalue)
+					{
+						$exit_code = false;
+
+						foreach ($dvalue as $idx => $val)
+						{
+						if (!is_numeric($idx))
+						{
+							$idx = str_replace('.', '', $idx);
+							
+							if (!is_numeric($idx))
+								$idx =  substr($idx , strripos($idx, '.') + 1 );
+						}
+							$counter = 0;
+							$perf_counter = 0;
+							
+							if ($item->group)
+							{
+								$group = $item->group->key;
+								$group_title = (string) $item->group->name;
+							}
+							if (!empty($group))
+							{
+								$gpindex = explode('.', $idx);
+								foreach ($gpindex as $gkey => $gp)
+								{
+									$group = str_replace('{{'. $gkey . '}}', $gp , $group);
+									@eval( '$result = (' . $group . ');' );
+									$group_key = $result;
+								}
+							}
+
+							if (is_array($states))
+							{
+								if (isset($states[$dkey][$val]))
+								{
+									$repl = $states[$dkey][$val]['replace'];
+
+									if(isset($states[$dkey][$val]['exit_code']))
+									{
+										$exit_code = $states[$dkey][$val]['exit_code'];
+									}
+								}
+								else
+									$repl = $val;
+							}
+							$ndata[$title][$idx]['values'][$dkey] =  $repl;
+
+							foreach ($fields as $fkey => $fvalue)
+							{
+								$ndata[$title][$idx]['values'][$fkey] = $fvalue;
+							}
+
+							if (!isset($ndata[$title][$idx]['exit_code']))
+								$ndata[$title][$idx]['exit_code'] = $exit_code;
+
+							if (is_numeric($exit_code))
+							{
+								if(!isset($ndata[$title][$idx]['exit_code']))
+									$ndata[$title][$idx]['exit_code'] = $exit_code;
+								elseif ($exit_code > $ndata[$title][$idx]['exit_code'])
+									$ndata[$title][$idx]['exit_code'] = $exit_code;
+								elseif ($ndata[$title][$idx]['exit_code'] == false)
+									$ndata[$title][$idx]['exit_code'] = $exit_code;
+							}
+
+							foreach ($warnings as $wkey => $w)
+							{
+									$ndata[$title][$idx]['checks'][$counter] =   array(
+									'type' => 'warning',
+									'criteria' => $w['criteria'],
+									'id' => $w['id'],
+								);
+								$counter++;
+							}
+
+							foreach ($criticals as $cindex => $c)
+							{
+								$ndata[$title][$idx]['checks'][$counter] =   array(
+									'type' => 'critical',
+									'criteria' => $c['criteria'],
+									'id' => $c['id'],
+								);
+								$counter++;
+							}
+
+							$ndata[$title][$idx]['group'] = $group_key;
+							$ndata[$title][$idx]['group_title'] = $group_title;
+							$ndata[$title][$idx]['rules']['filter'] = $filter;
+							$ndata[$title][$idx]['rules']['ignore'] = $ignores;
+
+							if ($item->output)
+							{
+								foreach ($item->output->message as $messi)
+								{
+										if (isset($messi['type']))
+										{
+											if ($messi['type'] == 'ok')
+												$ndata[$title][$idx]['output']['ok'] = (string) $messi;
+											if ($messi['type'] == 'warning')
+												$ndata[$title][$idx]['output']['warning'] = (string) $messi;
+											if ($messi['type'] == 'critical')
+												$ndata[$title][$idx]['output']['critical'] = (string) $messi;
+										}
+										else
+										{
+											$ndata[$title][$idx]['output']['ok'] = (string) $item->output->message[0];
+											$ndata[$title][$idx]['output']['warning'] = (string) $item->output->message[0];
+											$ndata[$title][$idx]['output']['critical'] = (string) $item->output->message[0];
+										}
+								}
+							}
+							
+							if ($item->perfdata)
+							{
+
+								foreach($item->perfdata as $perf)
+								{
+									$count = 0;
+									foreach ($perf->perfcounter as $perf_key=>$perfdata)
+									{
+										$ndata[$title][$idx]['perfdata'][$count] = (string) $perfdata;
+										$count++;
+									}
+								}
+							}
+							if ($item->header)
+							{
+							foreach($item->header as $hperf)
+								{
+									$count = 0;
+									foreach ($hperf->values as $v_key=>$vdata)
+									{
+										$id = (string) $vdata['id'];
+										if (!empty($id) && !empty($vdata))
+											$ndata[$title][$idx]['header'][$id] = (string) $vdata;
+									}
+								}
+							}
+							$ndata[$title][$idx]['hide'] = $hide;
+							$ndata[$title][$idx]['stacked'] = $stacked;
+						}
+					}
+				}
+
+				$tdata = $ndata;
+
+				foreach ($tdata as $titlekey => $titlevalue)
+				{
+					foreach ($titlevalue as $tkey => $tvalue)
+					{
+						foreach ($tvalue as $k => $v )
+						{
+							if ($k == 'values')
+							{
+								$result = '';
+
+								foreach ($v as $tk => $tv)
+								{
+									$search = array();
+									$search = array_keys($ndata[$titlekey][$tkey]['values']);
+
+									foreach ($search as $l => $s)
+										$searches[$l] = '{{' . $s . '}}';
+
+									$replaces = array_values($ndata[$titlekey][$tkey]['values']);
+
+									if (strpos($tv, '{{') !== false) 
+									{
+										$string = str_replace($searches , $replaces, $tv);
+										if (strpos($string, '$value') !== false)
+											@eval($string);
+										else
+											@eval( '$value = (' . $string . ');' );
+
+										$ndata[$titlekey][$tkey]['values'][$tk] = $value;
+									}
+								}
+								if(!empty($tdata[$titlekey][$tkey]['rules']['filter']) && $this->_checkFilter($tdata[$titlekey][$tkey]['rules']['filter'], $ndata[$titlekey][$tkey]['values']))
+									$ndata[$titlekey][$tkey]['filter'] = true;
+								else
+									$ndata[$titlekey][$tkey]['filter'] = false;
+								if(!empty($tdata[$titlekey][$tkey]['rules']['ignore']) && $this->_checkIgnores($tdata[$titlekey][$tkey]['rules']['ignore'], $ndata[$titlekey][$tkey]['values']))
+								{
+									$ndata[$titlekey][$tkey]['ignore']= true;
+								}
+								else
+									$ndata[$titlekey][$tkey]['ignore']= false;
+							}
+
+							if ($k == 'checks')
+							{
+								if(!empty($ndata[$titlekey][$tkey]['rules']['filter']) && $this->_checkFilter($ndata[$titlekey][$tkey]['rules']['filter'], $ndata[$titlekey][$tkey]['values']))
+									$ndata[$titlekey][$tkey]['filter'] = true;
+
+								else
+									$ndata[$titlekey][$tkey]['filter'] = false;
+
+								if(!empty($ndata[$titlekey][$tkey]['rules']['ignore']) && $this->_checkIgnores($ndata[$titlekey][$tkey]['rules']['ignore'], $ndata[$titlekey][$tkey]['values']))
+									$ndata[$titlekey][$tkey]['ignore']= true;
+
+								else
+									$ndata[$titlekey][$tkey]['ignore']= false;
+
+								foreach ($v as $tk => $tv)
+								{
+									$string = str_replace($searches , $replaces, $tv['criteria']);
+									
+									if ($this->compare)
+									{
+										foreach ($this->compare as $cmp_key => $cmp_value)
+										{
+											$string = str_replace('{{compare-max:'. $cmp_key. '}}' , max($this->compare[$cmp_key]), $string);
+											$string = str_replace('{{compare-min:'. $cmp_key. '}}' , min($this->compare[$cmp_key]), $string);
+
+											foreach ($cmp_value as $c_key => $c_value)
+												$string = str_replace('{{compare-' . $c_key . ':'. $cmp_key. '}}' , $this->compare[$cmp_key][$c_key], $string);
+										}
+									}
+
+									if (strpos($string, '$result') !== false)
+											@eval($string);
+										else
+											@eval( '$result = (' . $string . ');' );
+									
+									//@eval( '$result = (' . $string . ');' );
+									$ndata[$titlekey][$tkey]['checks'][$tk]['converted'] = $string;
+									$ndata[$titlekey][$tkey]['checks'][$tk]['applies'] = $result;
+									$ndata[$titlekey][$tkey]['checks'][$tk]['exit_code'] = 0;
+
+									if ($result && $ndata[$titlekey][$tkey]['checks'][$tk]['type'] == 'warning')
+										$ndata[$titlekey][$tkey]['checks'][$tk]['exit_code'] = 1;
+									if ($result && $ndata[$titlekey][$tkey]['checks'][$tk]['type'] == 'critical')
+										$ndata[$titlekey][$tkey]['checks'][$tk]['exit_code'] = 2;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (isset($ndata))
+		//prepare Output
+		foreach ($ndata as $opindex => $opvalue)
+		{
+			$counter = 1;
+			$perf_array = false;
+	
+			foreach ($opvalue as $i => $o)
+			{
+				$exit_codes = array();
+				$output_searches = array();
+				$output_replaces = array();
+
+				foreach ($o as $index => $value)
+				{
+					if ($index == 'values')
+					{
+						foreach ($value as $f => $t)
+						{
+							$output_searches[] = '{{' . $f . '}}';
+							$output_replaces[] = $t;
+						}
+					}
+				}
+				
+				if ($o['filter'] == true)
+					continue;
+
+				if ($o['group'])
+					$grp = $o['group'];
+				else
+					$grp = 0;
+			
+				$this->device['items'][$grp]['name'] = isset($o['group_title']) ? $o['group_title']: '';
+
+				if (isset($o['checks']))
+				{
+					foreach ($o['checks'] as $cindex => $cvalue)
+						$exit_codes[] = $cvalue['exit_code'];
+				}
+				
+				if (is_int($o['exit_code']))
+						$exit_codes[] = $o['exit_code'];
+
+				if(!empty($exit_codes))
+					$this->device['items'][$grp]['items'][$opindex][$i]['exit_code'] = max($exit_codes);
+
+				if (!empty($exit_codes))
+				{
+					if (max($exit_codes) == 0)
+						$m = 'ok';
+					if (max($exit_codes) == 1)
+						$m = 'warning';
+					if (max($exit_codes) == 2)
+						$m = 'critical';
+
+					if (isset($ndata[$opindex][$i]['output']) && strpos($ndata[$opindex][$i]['output'][$m], '[[') !== false) 
+					{
+						$ex = array();
+						
+						$string = $ndata[$opindex][$i]['output'][$m];
+						$string = str_replace($output_searches, $output_replaces, $string);
+
+						if (isset($o['checks']))
+						{
+							foreach ($o['checks'] as $cindex => $cvalue)
+							{
+								
+								if (!isset($ex[$cvalue['id']]) ||  $cvalue['exit_code'] > $ex[$cvalue['id']])
+									$ex[$cvalue['id']] = $cvalue['exit_code'];
+							}
+						}
+
+						$extr = extractOutput($string);
+						$extrid = extractOutputID($string);
+						foreach ($extrid as $key => $repl)
+						{
+							if (isset($ex) && in_array($key, $ex))
+								$string = str_replace('[['. $key .':' . $repl . ']]', formatStatus($repl, $ex[$key]) , $string);
+						}
+
+						foreach ($extr as $replaces)
+							$string = str_replace('[[' . $replaces . ']]', formatStatus($replaces, max($exit_codes)) , $string);
+
+							$this->device['items'][$grp]['items'][$opindex][$i]['output'] = str_replace('<br />', "\n", $string);
+					}
+					else
+					{	
+						if (isset($ndata[$opindex][$i]['output']))
+							$this->device['items'][$grp]['items'][$opindex][$i]['output'] = formatStatus(str_replace($output_searches, $output_replaces, $ndata[$opindex][$i]['output'][$m]), max($exit_codes));
+					}
+				}
+				else
+					$this->device['items'][$grp]['items'][$opindex][$i]['output'] = str_replace($output_searches, $output_replaces, $ndata[$opindex][$i]['output']['ok']);
+
+				if (isset($this->device['items'][$grp]['items'][$opindex][$i]['output']))
+					$this->device['items'][$grp]['items'][$opindex][$i]['output'] = str_replace('$$', $counter, $this->device['items'][$grp]['items'][$opindex][$i]['output']);
+
+				if (isset($o['ignore']) && $o['ignore'] == true)
+					$this->device['items'][$grp]['items'][$opindex][$i]['exit_code'] = 0;
+
+				if (isset($o['hide']) && $o['hide'] == true)
+					$this->device['items'][$grp]['items'][$opindex][$i]['hide'] = true;
+				
+				if (isset($o['stacked']) && $o['stacked'] == true)
+					$this->device['items'][$grp]['items'][$opindex][$i]['stacked'] = true;
+
+				if (isset($o['header']))
+				{
+					foreach ($o['header'] as $hindex=>$hvalue)
+					{
+						if (!empty($hindex) && !empty($hvalue))
+							$this->values[$hindex] = str_replace($output_searches, $output_replaces, $hvalue);
+					}
+
+				}
+				if (isset($o['perfdata']))
+				{
+					foreach ($o['perfdata'] as $pindex=>$pvalue)
+					{
+						$this->device['items'][$grp]['items'][$opindex][$i]['perfdata'][$pindex] = str_replace($output_searches, $output_replaces, $ndata[$opindex][$i]['perfdata'][$pindex]);
+						$this->device['items'][$grp]['items'][$opindex][$i]['perfdata'][$pindex] = str_replace('$$', $counter, $this->device['items'][$grp]['items'][$opindex][$i]['perfdata'][$pindex]);
+						
+						$tmp = explode(";", $this->device['items'][$grp]['items'][$opindex][$i]['perfdata'][$pindex]);
+						$tmp2 = explode('=', $tmp[0]);
+
+						$this->check['perfdata'][] = array(
+							'name' => (string) $tmp2[0],
+							'value'=> (string) $tmp2[1],
+							'warn' => (string) $tmp[1],
+							'crit' => (string) $tmp[2],
+							'min' => (string) $tmp[3],
+							'max' => (string) $tmp[4],
+							'format' => '',
+						);
+					}
+				}
+				uksort($this->device['items'][$grp]['items'][$opindex], "strnatcmp");
+				$counter++;
+			}
+		}
+
+		if (isset($this->params['debug']) && $this->params['debug'] == true)
+		{
+			print_r($this->device);
+			print_r($this->check);
+			die();
+		}
+
+		if ($this->store == true && count($this->tracking) > 0)
+			$this->updateDB($this->tracking);
+
+		$this->check['status'] = $this->_exit_code();
+
+		if (isset($this->check['message']) && isset($this->check['status']))
+		{
+			$message = $this->check['message'][$this->check['status']];
+
+			if(isset($this->device['message']))
+			{
+				$cleaned_message = '' . strip_tags($this->device['message']) . '';
+				$message = str_replace('{{message}}', $cleaned_message, $message);
+			}
+			//Add overviewdata to the global output message
+			if(isset($this->device['overview']))
+			{
+				$repl_overview = extractStringBetween('{{overview:', '}}', $message);
+
+				foreach ($this->device['overview'] as $okey => $ovalues)
+				{
+					foreach($ovalues as $ovalue)
+					{
+						if (in_array($okey, $repl_overview))
+						{
+							$message = str_replace('{{overview:' . $okey . '}}', trim($ovalue), $message);
+						}
+					}
+				}
+			}
+
+			// Add perfdata to the global output message
+			if(isset($this->check['perfdata']))
+			{
+				$repl_perfdata = extractStringBetween('{{perfdata:', '}}', $message);
+				$perf_message = '';
+
+				foreach ($this->check['perfdata'] as $pd)
+				{
+					$perf_message .= $pd['name']. ': ' . $pd['value'] . $pd['format'] . ' - ';
+
+					if (in_array($pd['name'], $repl_perfdata))
+						$message = str_replace('{{perfdata:' . $pd['name'] . '}}', $pd['value'], $message);
+				}
+
+				$perf_message = substr($perf_message, 0, -3);
+				$message = str_replace('{{perfdata}}', $perf_message, $message);
+			}
+			
+			if(isset($this->values))
+			{
+				$repl_values = extractStringBetween('{{values:', '}}', $message);
+				$value_message = '';
+
+				foreach ($this->values as $index => $value)
+				{
+					if (in_array($index, $repl_values))
+						$message = str_replace('{{values:' . $index . '}}', $value, $message);
+				}
+			}
+			$this->check['statusmessage'] = $message;
+		}
+
+		ob_start();
+		$this->Render();
+		$this->RenderPerfData();
+		echo "\n";
+		ob_end_flush();
+
+		$this->_closeSession($this->session);
+
+		exit ($this->check['status']);
+	}
+
+	private function _checkFilter($filter, $values)
+	{
+		$not_wanted = false;
+		$include_filter = false;
+		$include = false; 
+		$exclude_filter = false;
+		$exclude = false;
+
+		foreach ($filter as $f)
+		{
+			if($f['type'] == 'include')
+			{
+				$include_filter = true; 
+
+				if ($f['wildcard'] == false || $f['wildcard'] == 'false')
+				{
+					if ($f['keyword'] == $values[$f['field']])
+						$include = true;
+				}
+				if ($f['wildcard'] == true || $f['wildcard'] == 'true')
+				{
+					if (fnmatch($f['keyword'], $values[$f['field']], FNM_CASEFOLD))
+						$include = true;
+				}
+			}
+			
+			if($f['type'] == 'exclude')
+			{
+				$exclude_filter = true;
+				
+				if ($f['wildcard'] == false || $f['wildcard'] == 'false')
+				{
+				
+					if (isset($values[$f['field']]))
+					{
+						if ($f['keyword'] == $values[$f['field']])
+							$exclude = true;
+					}
+					else 
+						$exclude = true;
+				}
+				
+				
+				elseif ($f['wildcard'] == true || $f['wildcard'] == 'true')
+				{
+					if (fnmatch($f['keyword'], $values[$f['field']]))
+						$exclude = true;
+				}
+			}
+		}
+
+		if ($include_filter == true && $include == false)
+			$not_wanted = true;
+		
+		if ($exclude_filter == true && $exclude == true)
+			$not_wanted = true;
+
+		return $not_wanted;
+	}
+
+	private function _checkIgnores($filter, $values)
+	{
+		$ignore = false;
+		foreach ($filter as $f)
+		{
+			if ($f['wildcard'] == true)
+			{
+				if (!empty(fnmatch($f['keyword'], $values[$f['field']], FNM_CASEFOLD)))
+					$ignore = true;
+			}
+			else
+			{
+				if ($f['keyword'] == $values[$f['field']])
+					$ignore = true;
+			}
+		}
+		return $ignore;
+	}
+
+	private function _setURL($vendorfile)
+	{
+		if($vendorfile->url['target'])
+			$this->device['url']['target'] = str_replace('{{host}}', $this->params['host'], $vendorfile->url['target']);
+
+		if($vendorfile->url['title'])
+			$this->device['url']['title'] = str_replace('{{host}}', $this->params['host'], $vendorfile->url['title']);
+		else
+			$this->device['url']['title'] = str_replace('{{host}}', $this->params['host'], $vendorfile->url['target']);
+
+		if($vendorfile->url['name'])
+			$this->device['url']['name'] = $vendorfile->url['name'];
+		else
+			$this->device['url']['name'] = 'Link';
+	}
+
+	private function _getFilter($filter)
+	{
+		$ofilter = array();
+
+		foreach($filter as $key => $f)
+		{
+			$key = (string) $f['field'];
+
+			$ofilter[] = array(
+				'field' => $key =='value' ? 'state': $key,
+				'keyword' => (string) $f[0],
+				'wildcard' => (string)$f['wildcard'],
+				'type' => isset ($f['type']) ? (string)$f['type'] : '',
+			);
+		}
+		return $ofilter; 
+	}
+
+	private function _getFilterItems($filter)
+	{
+		$ofilter = array();
+
+		foreach($filter as $key => $f)
+		{
+			//print_r($f);
+			//$key = (string) $f['field'];
+			foreach ($f as $fkey => $fvalue)
+			{
+				$ofilter[] = array(
+					'field' => (string) $fvalue['field'],
+					'keyword' => (string) $fvalue,
+					'wildcard' => (string) $fvalue['wildcard'],
+					'type' => $fkey,
+				);
+			}
+			
+		}
+		return $ofilter; 
+	}
+
+	private function _getStates($states)
+	{
+		$stat = array();
+		foreach($states as $state)
+		{
+			$key = (int) $state['value'];
+
+			$stat[$key] = array(
+				'title' =>(string) $state['text'],
+				'exit_code' => (int) $state['exitcode'],
+			);
+		}
+		return $stat; 
+	}
+
+	private function _getNames($names)
+	{
+		$stat = array();
+		foreach($names as $name)
+		{
+			$key = (int) $name['value'];
+
+			$stat[$key] = array(
+				'title' =>(string) $name['text'],
+			);
+		}
+		return $stat; 
+	}
+
+	/**
+	* Determine the exit code of the device, highest value wins..
+	*/
+	private function _exit_code()
+	{
+		$codes = array_value_recursive('exit_code', $this->device);
+
+		
+		if (is_array($codes) && count($codes) > 1)
+			return max($codes);
+
+		elseif ($codes == 1)
+			return $codes;
+
+		else
+			return 0;
+	}
+
+	private function _hide_status($tree)
+	{
+		$codes = array_value_recursive('hide', $tree);
+
+		if (is_array($codes) && count($codes) > 1)
+			return min($codes);
+
+		elseif ($codes == 1)
+			return $codes;
+		else
+			return 0;
+	}
+
+	/**
+	* Render the output of our check
+	*/
+	public function Render()
+	{
+		echo $this->check['statusmessage'];
+		// Basic Infos ausgeben
+		if (isset($this->device['overview']))
+		{
+			echo "\n";
+
+			foreach ($this->device['overview'] as $key => $val)
+			{
+				foreach ($val as $value)
+				{
+					if (strtolower($key) == 'uptime')
+						echo ucfirst($key) . ': ' . uptime($value) . "<br>";
+					elseif (strtolower($key) == 'link')
+						echo 'Link : <a href="' . $value . '" target="_blank">' . $value . '</a>' . "<br>";
+					else
+						echo ucfirst($key) . ': ' . $value . "<br>";
+				}
+			}
+		}
+
+		if (isset($this->device['url']))
+			echo $this->device['url']['name'] . ': <strong><a style="color: #5f6268;" target="_blank" href="' . $this->device['url']['target'] . '">' . $this->device['url']['title'] . '</a></strong>';
+
+		if (isset($this->device['items']))
+		{
+			foreach ($this->device['items'] as $item_key => $item_value)
+			{
+			
+				if (count($this->device['items']) > 1 && !empty($item_value['name']))
+					echo "<br><br>" . '<div style="width: 98%; border-bottom: 1px solid #bbb; background-color: #eee; padding: 1px;"><strong> ' . $item_value['name'] . ' ' . $item_key . '</strong></div>';
+				
+				foreach ($item_value['items'] as $ikey => $ivalue)
+				{
+					$hide = false;
+					$stacked = false;
+					
+					foreach ($ivalue as $ikkey => $ikvalue)
+					{
+						if(isset($ikvalue['hide']) && $ikvalue['hide'] == true)
+							$hide = true;
+
+						if(isset($ikvalue['stacked']) && $ikvalue['stacked'] == true)
+							$stacked = true;
+					}
+					if ($hide == true)
+						continue;
+
+					echo '<div style="width: 98%; border-bottom: 1px solid #bbb;"><strong>' . $ikey. '</strong></div>' . "";
+
+					foreach ($ivalue as $ikkey => $ikvalue)
+					{
+						if (next($ivalue) == true)
+						{
+							if($stacked == true)
+								echo $ikvalue['output'] . " / ";
+							else
+								echo $ikvalue['output'] . "<br>";
+						}
+						else 
+							echo $ikvalue['output'] . "<br>";
+					}
+				}
+			}
+		}
+	}
+
+	public function RenderPerfData()
+	{
+		if(isset($this->check['perfdata']))
+		{
+			echo ' |';
+			foreach ($this->check['perfdata'] as $perfdata)
+			{
+				echo ' \'' . $perfdata['name'] .  '\'=' . $perfdata['value'] . ';';
+					echo isset ($perfdata['warn']) ? $perfdata['warn'] . ';' : ';';
+					echo isset($perfdata['crit']) ? $perfdata['crit']. ';' : ';';
+					echo isset ($perfdata['min']) ? $perfdata['min'] . ';' : ';';
+					echo isset ($perfdata['max']) ? $perfdata['max'] : '';
+			}
+			//echo "\n";
+		}
+		return false;
+	}
+
+	private function _setName()
+	{
+		return @$this->session->get('1.3.6.1.2.1.1.5.0');
+	}
+
+	private function _setVendor()
+	{
+		$vendor = @$this->session->get('1.3.6.1.2.1.1.2.0');
+		$vendor = str_replace('SNMPv2-SMI::enterprises.', '', $vendor);
+		$vendor = str_replace('iso.3.6.1.4.1.', '', $vendor);
+		
+		return $vendor;
+	}
+	
+	private function _detectVendor($oid)
+	{
+		$found = @$this->session->get($oid);
+		return !empty($found) ? true: false;
+	}
+
+	private function _setLocation()
+	{
+		return @$this->session->get('1.3.6.1.2.1.1.6.0');
+	}
+
+	private function _setUptime()
+	{
+		return @$this->session->get('1.3.6.1.2.1.1.3.0');
+	}
+
+	private function _getParams()
+	{
+		$context = array();
+		$warn = 90;
+		$crit = 95;
+		$version = '';
+
+		$options = getopt("h:u::C::v::p::e::E::c::w::a::", array("host:", "community::", "version::", "user::", "password:", "encrypt::", "private_encrypt::", "warning::", "critical::", "arguments::", "debug::", "xml::"));
+
+		// keine Optionen angegeben? Hilfe ausgeben
+		if(count($options) == 0)
+		{
+			printCheckHelp();
+			exit(0);
+		}
+		if(!isset($options['host']) && !isset($options['h']))
+		{
+			echo "parameter -h || --host (Hostname of the snmp target) is missing \n";
+			exit(0);
+		}
+
+		$context['debug'] = isset($options['debug']) ? true : false;
+		$context['xml'] = isset($options['xml']) ? $options['xml'] : false;
+
+		if(isset($options['user']) || isset($options['u']))
+		{
+			$context['version'] = 'VERSION_3';
+
+			if(!isset($options['password']) && !isset($options['p']))
+			{
+				echo "parameter -p || --password is missing \n";
+				exit(0);
+			}
+			if(!isset($options['encrypt']) && !isset($options['e']))
+			{
+				echo "parameter -e || --encrypt (The prefered encryption_mode usually SHA or MD5) is missing \n";
+				exit(0);
+			}
+			if(!isset($options['private_encrypt']) && !isset($options['E']))
+			{
+				echo "parameter -E || --private_encrypt (The prefered private_encryption_mode usually AES or DES) is missing \n";
+				exit(0);
+			}
+			$context['user'] = isset($options['user']) ? $options['user'] : $options['u'];
+			$context['password'] = isset($options['password']) ? $options['password'] : $options['p'];
+			$context['encrypt'] = isset($options['encrypt']) ? $options['encrypt'] : $options['e'];
+			$context['private_encrypt'] = isset($options['private_encrypt']) ? $options['private_encrypt'] : $options['E'];
+			$context['type'] = 'authPriv';
+		}
+
+		elseif (isset($options['community']) || isset($options['C']))
+		{
+			if(isset($options['version']) || isset($options['v']))
+			{
+				$context['v'] = isset($options['v']) ? $options['v'] : $options['version'];
+				if ($context['v'] == '1')
+					$context['version'] = 'VERSION_1';
+				else
+					$context['version'] = 'VERSION_2C';
+			}
+			else
+				$context['version'] = 'VERSION_2C';
+			
+			$context['community'] =  isset($options['C']) ? $options['C'] : $options['community'];
+		}
+
+		if(!isset($options['user']) && !isset($options['u']) && !isset($options['C']) && !isset($options['community']))
+		{
+			echo "parameter -u || --user or -C || --community is missing. Please use either -C for SNMPv2c, -C and -v1 for SNMPv1 or -u for SNMPv3\n";
+			exit(0);
+		}
+
+		$context['host'] = isset($options['host']) ? $options['host'] : $options['h'];
+		define('HOST', $context['host']);
+
+		$context['warning'] = isset($options['warning']) ? $options['warning'] : (isset($options['w']) ? $options['w'] : $warn);
+		$context['critical'] = isset($options['critical']) ? $options['critical'] : (isset($options['c']) ? $options['c'] : $crit);
+		$context['arguments'] = isset($options['a']) ? $options['a'] : (isset($options['arguments']) ? $options['arguments'] : false);
+
+		return $context;
+	}
+
+	private function _initSNMPSession ($snmp)
+	{
+		if ($snmp['version'] == 'VERSION_3')
+		{
+			$session = new SNMP(SNMP::VERSION_3, $snmp['host'], $snmp['user']);
+			$session->setSecurity($snmp['type'], $snmp['encrypt'], $snmp['password'] , $snmp['private_encrypt'], $snmp['password']);
+		}
+		elseif ($snmp['version'] == 'VERSION_2C')
+			$session = new SNMP(SNMP::VERSION_2C, $snmp['host'], $snmp['community']);
+
+		else
+			$session = new SNMP(SNMP::VERSION_1, $snmp['host'], $snmp['community']);
+
+		$session->valueretrieval = SNMP_VALUE_PLAIN;
+		$session->getError();
+		$error = '';
+		$test = @$session->get('1.3.6.1.2.1.1.5.0');
+		$error = $session->getError();
+
+		if (!empty($error))
+		{
+			echo 'UNKNOWN: ' . $error . ' - Icinga Worker: ' . gethostname() . "\n";
+			exit(3);
+		}
+		else 
+			return $session;
+	}
+
+	private function _closeSession($session)
+	{
+		 $session->close();
+	}
+	protected function _snmpIndex($data, $array, $field, $group = false)
+	{
+		if (empty($data))
+			return $array;
+
+		foreach ($data as $key=>$value)
+		{
+			$indexes = explode('.', $key);
+			$i = array_slice($indexes, -1, 1);
+			if ($group)
+			{
+				$grp = substr($i[0],0, -2);
+				$array[$grp][$i[0]][$field] = $value; 
+			}
+			else
+				$array[$i[0]][$field] = $value; 
+		}
+		return $array;
+	}
+
+	protected function _snmpGroup($data, $array, $field, $group = false, $use_index = false, $group_key = 1)
+	{
+		if (empty($data))
+			return $array;
+
+		foreach ($data as $key=>$value)
+		{
+			$indexes = explode('.', $key);
+
+			if ($group)
+			{
+				if ($use_index && $use_index == $indexes[1])
+				{
+					$grp = round($indexes[0], -1, PHP_ROUND_HALF_DOWN);
+					$array[$grp][$key][$field] = $value; 
+				}
+				elseif ($use_index && $use_index != $indexes[1])
+				{
+					continue;
+				}
+				else
+				{
+					$grp = round($indexes[0], -1, PHP_ROUND_HALF_DOWN);
+					$array[$grp][$key][$field] = $value; 
+				}
+			}
+			else
+			{
+				if ($use_index && $use_index == $indexes[1])
+				{
+					$array[$group_key][$key][$field] = $value; 
+				}
+				elseif ($use_index && $use_index != $indexes[1])
+				{
+					continue;
+				}
+				else
+				{
+					$array[$group_key][$key][$field] = $value; 
+				}
+			}
+
+		}
+		return $array;
+	}
+
+	private function _loadCustomXML($file)
+	{
+		if (file_exists(__DIR__ . '/Vendor/'. $file))
+			{
+				$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/'. $file, 'SimpleXMLElement', LIBXML_NOCDATA);
+				$this->Vendor = 'GenericDevice';
+				$this->cn = 'XML-' . chopExtension($file);
+
+				return $vendorfile;
+			}
+			else
+			{
+				echo 'XML file: ' . $file . ' not found!';
+				exit(3);
+			}
+	}
+	private function _loadVendorXML()
+	{
+		$file =  __DIR__ . '/Vendor/devices.xml';
+		$devices = simplexml_load_file($file, 'SimpleXMLElement', LIBXML_NOCDATA);
+
+		foreach ($devices->children() as $devlist)
+		{
+			foreach ($devlist->children() as $types)
+			{
+				$is_vendor = $this->_detectVendor($types['detect']);
+				if ($is_vendor)
+				{
+					$this->cn = 'XML-' . chopExtension($types['file']);
+					$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/'. $types['file'], 'SimpleXMLElement', LIBXML_NOCDATA);
+					$this->Vendor = (string) $types['vendor'];
+				}
+			}
+			if (empty($vendorfile))
+			{
+				if ($devlist['enterpriseoid'] == $this->_setVendor() && isset($devlist['file']))
+				{
+					$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/'. $devlist['file'], 'SimpleXMLElement', LIBXML_NOCDATA);
+					$this->cn = 'XML-' .chopExtension($devlist['file']);
+					$this->Vendor =  $this->_setVendor();
+				}
+			}
+		}
+		if (empty($vendorfile))
+		{
+			$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/genericdevice.xml', 'SimpleXMLElement', LIBXML_NOCDATA);
+			$this->Vendor = 'GenericDevice';
+		}
+
+		return $vendorfile;
+	}
+
+	private function _loadMibs($mibs)
+	{
+		$generic_mibs = array_diff(scandir(__DIR__ . '/Vendor/mibs/generic/'), array('..', '.'));
+
+		foreach ($generic_mibs as $mib_file)
+			snmp_read_mib(__DIR__ . '/Vendor/mibs/generic/' . $mib_file);
+
+		if ($mibs->children())
+		{
+			foreach($mibs->children() as $mib)
+			{
+				if (file_exists(__DIR__ . '/Vendor/mibs/' . $mib))
+					snmp_read_mib(__DIR__ . '/Vendor/mibs/' . $mib);
+			}
+		}
+	}
+}
+
+function formatStatus ($txt, $exit_code = 4)
+{
+	$green = '#66bb6a';
+	$red = '#f0666c';
+	$orange = '#ffe57b';
+	$grey = '#5f6268';
+	$white = '#fff';
+	
+	if ($exit_code == 0)
+		$output =  '<span style="background-color:'. $green . '; color: ' . $white . '; padding: 1px 3px;">'. $txt . '</span>';
+	
+	elseif ($exit_code == 1)
+		$output =  '<span style="background-color:'. $orange . '; color: ' . $grey . '; padding: 1px 3px;">'. $txt . '</span>';
+	
+	elseif ($exit_code == 2)
+		$output =  '<span style="background-color:'. $red . '; color: ' . $white . '; padding: 1px 3px;">'. $txt . '</span>';
+	else
+		$output = $txt;
+
+	return $output;
+}
+
+function formatOutput ($txt, $type)
+{
+	$txt = trim($txt);
+	if ($type == 'header')
+		return '<div style="width: 98%; border-bottom: 1px solid #bbb;"><strong>' . $txt . '</strong></div>';
+	elseif ($type == 'bold' || $type == 'subheader')
+		return '<strong>' . $txt . '</strong>';
+	else
+		return $txt;
+	
+}
+
+function set_exit_code($array)
+{
+	$codes = array_value_recursive('exit_code', $array);
+	return max($codes);
+}
+/**
+ * Get all values from specific key in a multidimensional array
+ *
+ * @param string $key key(s) of value you wish to extract
+ * @param array  $arr where you want
+ *
+ * @return null|string|array
+ */
+function array_value_recursive($key, array $arr)
+{
+    $val = array();
+    array_walk_recursive($arr, function ($v, $k) use ($key, &$val) {
+        if ($k == $key) array_push($val, $v);
+    });
+    return count($val) > 1 ? $val : array_pop($val);
+}
+
+
+
+function snmptable($input, $raw, $index_key, $field, $caption= 'name') 
+{
+	foreach ($raw as $key => $value)
+	{
+		$indexes= explode(".", $key);
+		
+		if (!in_array($field, $indexes))
+			continue;
+
+		array_shift($indexes);
+		
+		$input[$indexes[$index_key]][$caption] = (string) $value;
+		
+	}
+	return $input;
+}
+
+function snmpindextable($input, $raw, $index_key, $field, $caption= 'name') 
+{
+	
+	$result = array();
+	$data = array();
+	foreach($raw as $path => $value)
+	{
+		$temp = &$result;
+		foreach(explode('.', $path) as $key)
+		{
+			$temp =& $temp[$key];
+		}
+		$temp = $value;
+	}
+	
+	
+	foreach($result as $rkey => $rvalue)
+	{	
+		$data[$rkey][$caption] = $rvalue[$field];
+	}
+	
+	return $data;
+
+}
+
+function calculate ($var, $calc, $total = false)
+{
+		$c = str_replace('{{value}}', $var, $calc);
+		$c = str_replace('{{total}}', $total, $c);
+		$result = '';
+		@eval( '$result = (' . $c . ');' );
+
+		return $result;
+}
+function calculateUsage ($used, $total)
+{
+		return $used * 100 / $total;
+}
+
+function calcExit($var, $string, $total = false)
+{
+	$var = strip_tags($var);
+	$string = strip_tags($string);
+	$string = str_replace('{{value}}', $var, $string);
+	$string = str_replace('{{greater}}', '>', $string);
+	$string = str_replace('{{smaller}}', '<', $string);
+	$string = str_replace('{{equal}}', '==', $string);
+	$string = str_replace('{{total}}', $total, $string);
+
+	$result= false;
+
+	@eval ('
+		if (' . $string .  ')
+		{ 	$result = true;	}
+		');
+		return $result;
+}
+
+function calcWarnCrit($var, $string, $total = false)
+{
+	$var = strip_tags($var);
+	$string = strip_tags($string);
+	$string = str_replace('{{value}}', $var, $string);
+	$string = str_replace('{{greater}}', '>', $string);
+	$string = str_replace('{{smaller}}', '<', $string);
+	$string = str_replace('{{equal}}', '==', $string);
+	$string = str_replace('{{total}}', $total, $string);
+
+	$result= false;
+
+	@eval( '$result = (' . $string . ');' );
+	return $result;
+}
+
+function compareValues ($ar, $warn, $crit)
+{
+	$min = min ($ar);
+	$max = max ($ar);
+	
+	if ($max - $min > $crit)
+		return 2;
+	if ($max - $min > $warn)
+		return 1;
+
+	return 0;
+}
+
+function compareVal($array, $string)
+{
+	$string = strip_tags($string);
+	
+	$string = str_replace('{{min:value}}', min($array), $string);
+	$string = str_replace('{{max:value}}', max($array), $string);
+	$string = preg_replace_callback(
+		'~{{value\:(.*?)}}~', 
+		function ($treffer) use ($array) {
+			return $array[$treffer[1]];
+		}, $string);
+
+	$result= false;
+
+	@eval ('
+		if (' . $string .  ')
+		{ 	$result = true;	}
+		');
+	return $result;
+}
+
+function uptime($date)
+{
+	date_default_timezone_set('UTC');
+	$value = time() - ($date / 100);
+	$start = date_create(date('Y-m-d', $value));
+	$end = date_create(); // Current time and date
+	$diff = date_diff( $start, $end );
+
+	return $diff->format('%a Tag(e), %i Minute(n)');
+}
+
+
+
+function chopExtension($filename) 
+{
+    return pathinfo($filename, PATHINFO_FILENAME);
+}
+
+function strposArray($haystack, $needle, $offset = 0)
+{
+    if(!is_array($needle)) 
+		$needle = array($needle);
+	
+    foreach($needle as $query) 
+	{
+        if(strpos($haystack, $query, $offset) !== false) 
+			return true; // stop on first true result
+    }
+    return false;
+}
+
+function striposArray($haystack, $needle, $offset = 0)
+{
+    if(!is_array($needle)) 
+		$needle = array($needle);
+	
+    foreach($needle as $query) 
+	{
+        if(stripos($haystack, $query, $offset) !== false) 
+			return true; // stop on first true result
+    }
+    return false;
+}
+
+function extractStringBetween($cFirstChar, $cSecondChar, $sString)
+{
+	preg_match_all("/\\".$cFirstChar."(.*?)\\".$cSecondChar."/", $sString, $aMatches);
+	return $aMatches[1];
+
+}
+function extractOutput($sString)
+{
+	preg_match_all("/\[\[(.*?)\]\]/", $sString, $aMatches);
+	return $aMatches[1];
+}
+
+function extractOutputID($sString)
+{
+	$output = array();
+
+	preg_match_all("/\[\[(.*?)\]\]/", $sString, $aMatches);
+
+	foreach ($aMatches[1]as $match)
+	
+	if (strpos($match, ':') !== false) 
+	{
+		$ex = explode(':', $match);
+		$output[$ex[0]] = $ex[1];
+	}
+		return $output;
+}
+
+
+function in_array_any($needles, $haystack) 
+{
+   return !!array_intersect($needles, $haystack);
+}
+
+function rec_array_replace ($find, $replace, $array)
+{
+    if (! is_array($array)) {
+		
+        return str_replace($find, $replace, $array);
+    }
+ 
+    $newArray = array();
+ 
+    foreach ($array as $key => $value) {
+        $newArray[$key] = rec_array_replace($find, $replace, $value);
+    }
+ 
+    return $newArray;
+}
+
+function array_to_hex($ar)
+{
+	$nar = array();
+	
+	foreach ($ar as $key => $value)
+	{
+		$nar[$key] = bin2hex($value);
+	}
+
+	return $nar;
+}

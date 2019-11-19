@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5</value>
+		<value name="Location">1.3.6.1.2.1.1.6</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3</value>
+		<value name="Type">1.3.6.1.4.1.232.2.2.4.2</value>
+		<value name="SN">1.3.6.1.4.1.232.2.2.2.1</value>
+	</overview>
+	<url name="iLO4" target="https://{{host}}" title="https://{{host}}"></url>
+	<items>
+		<item title="PowerSupplies">
+			<values>
+				<value id="state" type="get">1.3.6.1.4.1.232.6.2.9.3.1.4</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="0">other</replace>
+				<replace field="state" value="2" exitcode="0">ok</replace>
+				<replace field="state" value="3" exitcode="1">degraded</replace>
+				<replace field="state" value="4" exitcode="1">failed</replace>
+			</replaces>
+			<output>
+				<message>Powersupply $$ : [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Fans" stacked="true">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.232.6.2.6.7.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.232.6.2.6.7.1.9</value>
+			</values>
+			<replaces>
+				<replace field="name" value="1">other</replace>
+				<replace field="name" value="2">unknown</replace>
+				<replace field="name" value="3">system</replace>
+				<replace field="name" value="4">systemBoard</replace>
+				<replace field="name" value="5">ioBoard</replace>
+				<replace field="name" value="6">cpu</replace>
+				<replace field="name" value="7">memory</replace>
+				<replace field="name" value="8">storage</replace>
+				<replace field="name" value="9">removableMedia</replace>
+				<replace field="name" value="10">powerSupply</replace>
+				<replace field="name" value="11">ambient</replace>
+				<replace field="name" value="12">chassis</replace>
+				<replace field="name" value="13">bridgeCard</replace>
+				<replace field="name" value="14">managementBoard</replace>
+				<replace field="name" value="15">backplane</replace>
+				<replace field="name" value="16">networkSlot</replace>
+				<replace field="name" value="17">bladeSlot</replace>
+				<replace field="name" value="18">virtual</replace>
+				<replace field="state" value="1" exitcode="0">other</replace>
+				<replace field="state" value="2" exitcode="0">ok</replace>
+				<replace field="state" value="3" exitcode="1">degraded</replace>
+				<replace field="state" value="4" exitcode="1">failed</replace>
+			</replaces>
+			<output>
+				<message>{{name}} : [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="CPU">
+			<values>
+				<value id="state" type="get">1.3.6.1.4.1.232.1.2.2.1.1.6</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">unkown</replace>
+				<replace field="state" value="2" exitcode="0">ok</replace>
+				<replace field="state" value="3" exitcode="1">degraded</replace>
+				<replace field="state" value="4" exitcode="1">failed</replace>
+				<replace field="state" value="5" exitcode="0">disabled</replace>
+			</replaces>
+			<output>
+				<message>CPU$$ : [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Memory">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.232.6.2.14.13.1.13</value>
+				<value id="state" type="get">1.3.6.1.4.1.232.6.2.14.13.1.19</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="0">other</replace>
+				<replace field="state" value="2" exitcode="0">notPresent</replace>
+				<replace field="state" value="3" exitcode="0">present</replace>
+				<replace field="state" value="4" exitcode="0">good</replace>
+				<replace field="state" value="5" exitcode="1">add</replace>
+				<replace field="state" value="6" exitcode="1">upgrade</replace>
+				<replace field="state" value="7" exitcode="1">missing</replace>
+				<replace field="state" value="8" exitcode="1">doesNotMatch</replace>
+				<replace field="state" value="9" exitcode="1">notSupported</replace>
+				<replace field="state" value="10" exitcode="1">badConfig</replace>
+				<replace field="state" value="11" exitcode="1">degraded</replace>
+				<replace field="state" value="12" exitcode="1">spare</replace>
+				<replace field="state" value="13" exitcode="1">partial</replace>
+			</replaces>
+			<filter>
+				<exclude field="state">notPresent</exclude>
+			</filter>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Temperature Sensors" stacked="true">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.232.6.2.6.8.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.232.6.2.6.8.1.6</value>
+			</values>
+			<replaces>
+				<replace field="name" value="1">other</replace>
+				<replace field="name" value="2">unknown</replace>
+				<replace field="name" value="3">system</replace>
+				<replace field="name" value="4">systemBoard</replace>
+				<replace field="name" value="5">ioBoard</replace>
+				<replace field="name" value="6">cpu</replace>
+				<replace field="name" value="7">memory</replace>
+				<replace field="name" value="8">storage</replace>
+				<replace field="name" value="9">removableMedia</replace>
+				<replace field="name" value="10">powerSupply</replace>
+				<replace field="name" value="11">ambient</replace>
+				<replace field="name" value="12">chassis</replace>
+				<replace field="name" value="13">bridgeCard</replace>
+				<replace field="state" value="1" exitcode="0">other</replace>
+				<replace field="state" value="2" exitcode="0">ok</replace>
+				<replace field="state" value="3" exitcode="1">degraded</replace>
+				<replace field="state" value="4" exitcode="1">failed</replace>
+			</replaces>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="RaidController">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.232.3.2.2.1.1.2</value>
+				<value id="state" type="get">1.3.6.1.4.1.232.3.2.2.1.1.6</value>
+			</values>
+			<replaces>
+				<replace field="name"  value="1">other</replace>
+				<replace field="name"  value="2">ida</replace>
+				<replace field="name"  value="3">idaExpansion</replace>
+				<replace field="name"  value="4">ida-2</replace>
+				<replace field="name"  value="5">smart</replace>
+				<replace field="name"  value="6">smart-2e</replace>
+				<replace field="name"  value="7">smart-2p</replace>
+				<replace field="name"  value="8">smart-2sl</replace>
+				<replace field="name"  value="9">smart-3100es</replace>
+				<replace field="name"  value="10">smart-3200</replace>
+				<replace field="name"  value="11">smart-2dh</replace>
+				<replace field="name"  value="12">smart-221</replace>
+				<replace field="name"  value="13">sa-4250es</replace>
+				<replace field="name"  value="14">sa-4200</replace>
+				<replace field="name"  value="15">sa-integrated</replace>
+				<replace field="name"  value="16">sa-431</replace>
+				<replace field="name"  value="17">sa-5300</replace>
+				<replace field="name"  value="18">raidLc2</replace>
+				<replace field="name"  value="19">sa-5i</replace>
+				<replace field="name"  value="20">sa-532</replace>
+				<replace field="name"  value="21">sa-5312</replace>
+				<replace field="name"  value="22">sa-641</replace>
+				<replace field="name"  value="23">sa-642</replace>
+				<replace field="name"  value="24">sa-6400</replace>
+				<replace field="name"  value="25">sa-6400em</replace>
+				<replace field="name"  value="26">sa-6i</replace>
+				<replace field="name"  value="27">sa-generic</replace>
+				<replace field="name"  value="29">sa-p600</replace>
+				<replace field="name"  value="30">sa-p400</replace>
+				<replace field="name"  value="31">sa-e200</replace>
+				<replace field="name"  value="32">sa-e200i</replace>
+				<replace field="name"  value="33">sa-p400i</replace>
+				<replace field="name"  value="34">sa-p800</replace>
+				<replace field="name"  value="35">sa-e500</replace>
+				<replace field="name"  value="36">sa-p700m</replace>
+				<replace field="name"  value="37">sa-p212</replace>
+				<replace field="name"  value="38">sa-p410</replace>
+				<replace field="name"  value="39">sa-p410i</replace>
+				<replace field="name"  value="40">sa-p411</replace>
+				<replace field="name"  value="41">sa-b110i</replace>
+				<replace field="name"  value="42">sa-p712m</replace>
+				<replace field="name"  value="43">sa-p711m</replace>
+				<replace field="name"  value="44">sa-p812</replace>
+				<replace field="name"  value="45">sw-1210m</replace>
+				<replace field="name"  value="46">sa-p220i</replace>
+				<replace field="name"  value="47">sa-p222</replace>
+				<replace field="name"  value="48">sa-p420</replace>
+				<replace field="name"  value="49">sa-p420i</replace>
+				<replace field="name"  value="50">sa-p421</replace>
+				<replace field="name"  value="51">sa-b320i</replace>
+				<replace field="name"  value="52">sa-p822</replace>
+				<replace field="name"  value="53">sa-p721m</replace>
+				<replace field="name"  value="54">sa-b120i</replace>
+				<replace field="name"  value="55">hps-1224</replace>
+				<replace field="name"  value="56">hps-1228</replace>
+				<replace field="name"  value="57">hps-1228m</replace>
+				<replace field="name"  value="58">sa-p822se</replace>
+				<replace field="name"  value="59">hps-1224e</replace>
+				<replace field="name"  value="60">hps-1228e</replace>
+				<replace field="name"  value="61">hps-1228em</replace>
+				<replace field="state" value="1" exitcode="0">other</replace>
+				<replace field="state" value="2" exitcode="0">ok</replace>
+				<replace field="state" value="3" exitcode="1">degraded</replace>
+				<replace field="state" value="4" exitcode="1">failed</replace>
+			</replaces>
+			<output>
+				<message>{{name}} : [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="PhysicalDrives">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.232.3.2.5.1.1.64</value>
+				<value id="state" type="get">1.3.6.1.4.1.232.3.2.5.1.1.6</value>
+				<value id="model" type="get">1.3.6.1.4.1.232.3.2.5.1.1.3</value>
+				<value id="sn" type="get">1.3.6.1.4.1.232.3.2.5.1.1.51</value>
+				<value id="mbsize" type="get">1.3.6.1.4.1.232.3.2.5.1.1.45</value>
+				<value id="size">round({{mbsize}} / 1000, 0) </value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="0">other</replace>
+				<replace field="state" value="2" exitcode="0">ok</replace>
+				<replace field="state" value="3" exitcode="1">failed</replace>
+				<replace field="state" value="4" exitcode="1">predictiveFailure</replace>
+				<replace field="state" value="5" exitcode="1">erasing</replace>
+				<replace field="state" value="6" exitcode="1">eraseDone</replace>
+				<replace field="state" value="7" exitcode="1">eraseQueued</replace>
+				<replace field="state" value="8" exitcode="1">ssdWearOut</replace>
+				<replace field="state" value="9" exitcode="1">notAuthenticated</replace>
+			</replaces>
+			<output>
+				<message>{{name}} (Model: {{model}} - SN: {{sn}} - Size: {{size}} GB): [[{{state}}]]</message>
+			</output>
+		</item>
+	</items>
+</device>

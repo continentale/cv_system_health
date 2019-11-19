@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device output="full">
+	<overview>
+		<get name="Name">1.3.6.1.2.1.1.5.0</get>
+		<get name="Location">1.3.6.1.2.1.1.6.0</get>
+		<get name="Uptime">1.3.6.1.2.1.1.3.0</get>
+		<get name="SerialNumber">1.3.6.1.4.1.2272.1.4.2.0</get>
+		<get name="Model">1.3.6.1.2.1.1.1.0</get>
+		<get name="Firmware">1.3.6.1.4.1.2272.1.1.7.0</get>
+	</overview>
+	<url name="Chassis" target="https://{{host}}" title="https://{{host}}"></url>
+	<items>
+		<item title="Fans">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.2272.1.4.7.1.1.1</value>
+				<value id="state" type="get">1.3.6.1.4.1.2272.1.4.7.1.1.2</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">unknown</replace>
+				<replace field="state" value="2" exitcode="0">up</replace>
+				<replace field="state" value="3" exitcode="1">down</replace>
+			</replaces>
+			<output>
+				<message>Fan {{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Fans">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.2272.1.101.1.1.4.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.2272.1.101.1.1.4.1.4</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">unknown</replace>
+				<replace field="state" value="2" exitcode="0">up</replace>
+				<replace field="state" value="3" exitcode="1">down</replace>
+				<replace field="state" value="4" exitcode="0">notpresent</replace>
+			</replaces>
+			<output>
+				<message>Fan {{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Power Supplies">
+			<values>
+				<value id="state" type="get">1.3.6.1.4.1.2272.1.4.8.1.1.2</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">unknown</replace>
+				<replace field="state" value="2" exitcode="0">empty</replace>
+				<replace field="state" value="3" exitcode="0">up</replace>
+				<replace field="state" value="4" exitcode="1">down</replace>
+			</replaces>
+			<output>
+				<message>PowerSupply $$: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Temperature Sensors">
+			<values>
+				<value id="temperature" type="get">1.3.6.1.4.1.2272.1.4.7.1.1.3</value>
+			</values>
+			<output>
+				<message>Sensor $$: {{temperature}} ° Celsius</message>
+			</output>
+		</item>
+		<item title="Temperature">
+			<values>
+				<value id="temperature" type="get">1.3.6.1.4.1.2272.1.100.1.2</value>
+			</values>
+			<output>
+				<message>Sensor $$: {{temperature}} ° Celsius</message>
+			</output>
+		</item>
+		<item title="Modules">
+			<values>
+				<value id="modindex" type="get">1.3.6.1.4.1.2272.1.71.1.1.1</value>
+				<value id="statusmask" type="get" hex="true">1.3.6.1.4.1.2272.1.71.1.1.2</value>
+				<value id="vendorname" type="get">1.3.6.1.4.1.2272.1.71.1.1.6</value>
+				<value id="moduletype" type="get">1.3.6.1.4.1.2272.1.71.1.1.5</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{statusmask}} != 'ddm-ok' && {{statusmask}} != 'ddm-checksum-error' && {{statusmask}} != 'ddm-avaya-checksum-error' && {{statusmask}} != 'unknown' ]]></check>
+			</checks>
+			<replaces>
+				<replace field="statusmask" value="30" exitcode="0">unknown</replace>
+				<replace field="statusmask" value="8000" exitcode="0">ddm-ok</replace>
+				<replace field="statusmask" value="4000" exitcode="0">ddm-checksum-error</replace>
+				<replace field="statusmask" value="8002" exitcode="1">ddm-r2c-error</replace>
+				<replace field="statusmask" value="8003" exitcode="1">ddm-threshold-error</replace>
+				<replace field="statusmask" value="8004" exitcode="1">ddm-callibration-error</replace>
+				<replace field="statusmask" value="0400" exitcode="0">ddm-avaya-checksum-error</replace>
+				
+			</replaces>
+			<output>
+				<message>{{vendorname}} {{moduletype}} (Modul {{modindex}} ): [[{{statusmask}}]]</message>
+			</output>
+		</item>
+	</items>
+</device>

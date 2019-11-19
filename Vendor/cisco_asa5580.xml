@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:Name}} {{values:sessions}} ({{overview:SN}}) is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:Name}} ({{overview:SN}}) reported problems. please check details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:Name}} ({{overview:SN}}) reported problems. please check details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5.0</value>
+		<value name="Location">1.3.6.1.2.1.1.6</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="SN">1.3.6.1.2.1.47.1.1.1.1.11.1</value>
+		<value name="Version">1.3.6.1.2.1.47.1.1.1.1.10.4</value>
+		<value name="Model">1.3.6.1.2.1.47.1.1.1.1.13.4</value>
+	</overview>
+	<items>
+		<item title="Sensors">
+			<values>
+				<value id="sensorstate" type="get">1.3.6.1.2.1.99.1.1.1.5</value>
+				<value id="name" type="get">1.3.6.1.2.1.47.1.1.1.1.7</value>
+			</values>
+			<replaces>
+				<replace field="sensorstate" exitcode="0" value="1">ok</replace>
+				<replace field="sensorstate" exitcode="0" value="2">unavailable</replace>
+				<replace field="sensorstate" exitcode="1" value="3">nonoperational</replace>
+			</replaces>
+			<filter>
+				<include field="name" wildcard="false">*Sensor*</include>
+			</filter>
+			<output>
+				<message type="ok">{{name}}: [[{{sensorstate}}]]</message>
+				<message type="warning">{{name}}: [[{{sensorstate}}]]</message>
+				<message type="critical">{{name}}: [[{{sensorstate}}]]</message>
+			</output>
+		</item>
+		<item title="CPU Usage">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.9.9.109.1.1.1.1.2</value>
+				<value id="usage" type="get">1.3.6.1.4.1.9.9.109.1.1.1.1.7</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 90 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 95 ]]></check>
+			</checks>
+			<output>
+				<message type="ok">CPU$$: [[{{usage}}]]%</message>
+				<message type="warning">CPU$$: [[{{usage}}]]%</message>
+				<message type="critical">CPU$$: [[{{usage}}]]%</message>
+			</output>
+		</item>
+		<item title="Memory Pool Usage">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.9.9.48.1.1.1.2</value>
+				<value id="used" type="get">1.3.6.1.4.1.9.9.48.1.1.1.5</value>
+				<value id="free" type="get">1.3.6.1.4.1.9.9.48.1.1.1.6</value>
+				<value id="usage">round( {{used}} * 100 / ({{used}} + {{free}}), 2)</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 98 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 99 ]]></check>
+			</checks>
+			<output>
+				<message>{{name}}: [[{{usage}}]]%</message>
+			</output>
+		</item>
+		<item title="VPN Sessions">
+			<values>
+				<value id="total" type="get">1.3.6.1.4.1.9.9.392.1.1.1</value>
+				<value id="active" type="get">1.3.6.1.4.1.9.9.392.1.3.1</value>
+				<value id="activeusers" type="get">1.3.6.1.4.1.9.9.392.1.3.3</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{active}} > 4000 ]]></check>
+				<check type="critical"><![CDATA[ {{active}} > 5000 ]]></check>
+			</checks>
+			<output>
+				<message type="ok">Active Sessions:[[{{active}}]] (from {{total}}) / Active Users: {{activeusers}}</message>
+				<message type="warning">Active Sessions: [[{{active}}]] (from {{total}}) / Active Users: {{activeusers}}</message>
+				<message type="critical">Active Sessions: {{active}} (from {{total}}) / Active Users: {{activeusers}}</message>
+			</output>
+			<perfdata>
+				<perfcounter>ActiveSessions={{active}};;;;</perfcounter>
+				<perfcounter>ActiveUsers={{activeusers}};;;;</perfcounter>
+			</perfdata>
+		</item>
+		<item title="ClusterState">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.9.9.147.1.2.1.1.1.2</value>
+				<value id="value" type="get">1.3.6.1.4.1.9.9.147.1.2.1.1.1.3</value>
+			</values>
+			<replaces>
+				<replace field="value" exitcode="1" value="1">other</replace>
+				<replace field="value" exitcode="0" value="2">up</replace>
+				<replace field="value" exitcode="2" value="3">down</replace>
+				<replace field="value" exitcode="2" value="4">error</replace>
+				<replace field="value" exitcode="1" value="5">overTemp</replace>
+				<replace field="value" exitcode="1" value="6">busy</replace>
+				<replace field="value" exitcode="1" value="7">noMedia</replace>
+				<replace field="value" exitcode="1" value="8">backup</replace>
+				<replace field="value" exitcode="0" value="9">active</replace>
+				<replace field="value" exitcode="0" value="10">standby</replace>
+				<replace field="name" value="Secondary unit (this device)">Secondary</replace>
+				<replace field="name" value="Primary unit (this device)">Primary</replace>
+			</replaces>
+			<filter>
+				<include field="name" wildcard="false">Failover LAN Interface</include>
+			</filter>
+			<output>
+				<message type="ok">{{name}}: [[{{value}}]]</message>
+				<message type="warning">{{name}}: [[{{value}}]]</message>
+				<message type="critical">{{name}}: [[{{value}}]]</message>
+			</output>
+		</item>
+		<item title="Node">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.9.9.147.1.2.1.1.1.2</value>
+				<value id="value" type="get">1.3.6.1.4.1.9.9.147.1.2.1.1.1.3</value>
+			</values>
+			<replaces>
+				<replace field="value" exitcode="1" value="1">other</replace>
+				<replace field="value" exitcode="0" value="2">up</replace>
+				<replace field="value" exitcode="2" value="3">down</replace>
+				<replace field="value" exitcode="2" value="4">error</replace>
+				<replace field="value" exitcode="1" value="5">overTemp</replace>
+				<replace field="value" exitcode="1" value="6">busy</replace>
+				<replace field="value" exitcode="1" value="7">noMedia</replace>
+				<replace field="value" exitcode="1" value="8">backup</replace>
+				<replace field="value" exitcode="0" value="9">active</replace>
+				<replace field="value" exitcode="0" value="10">standby</replace>
+				<replace field="name" value="Secondary unit (this device)">Secondary</replace>
+				<replace field="name" value="Primary unit (this device)">Primary</replace>
+			</replaces>
+			<filter>
+				<include field="name" wildcard="false">Secondary unit (this device)</include>
+				<include field="name" wildcard="false">Primary</include>
+				<include field="name" wildcard="false">Secondary</include>
+				<include field="name" wildcard="false">Primary unit (this device)</include>
+			</filter>
+			<output>
+				<message type="ok">Node: {{name}} / state [[{{value}}]]</message>
+				<message type="warning">Node: {{name}} / state [[{{value}}]]</message>
+				<message type="critical">Node: {{name}} / state [[{{value}}]]</message>
+			</output>
+			<header>
+				<values id="sessions">({{name}} - {{value}})</values>
+			</header>
+		</item>
+		<item title="Crypto-Accelerator">
+			<values>
+				<value id="type" type="get">1.3.6.1.4.1.9.9.467.1.2.2.1.4</value>
+				<value id="state" type="get">1.3.6.1.4.1.9.9.467.1.2.2.1.3</value>
+			</values>
+			<replaces>
+				<replace field="type" value="1">other</replace>
+				<replace field="type" value="2">software</replace>
+				<replace field="type" value="3">integrated</replace>
+				<replace field="type" value="4">sep</replace>
+				<replace field="type" value="5">sepe</replace>
+				<replace field="type" value="6">a1700VpnModule</replace>
+				<replace field="type" value="7">aimVpnIBp</replace>
+				<replace field="type" value="8">aimVpnIEp</replace>
+				<replace field="type" value="9">aimVpnIIBp</replace>
+				<replace field="type" value="10">aimVpnIIEp</replace>
+				<replace field="type" value="11">aimVpnIIHp</replace>
+				<replace field="type" value="12">isa</replace>
+				<replace field="type" value="13">vam</replace>
+				<replace field="type" value="14">vam2</replace>
+				<replace field="type" value="15">vam2plus</replace>
+				<replace field="type" value="16">vpnsm</replace>
+				<replace field="type" value="17">caviumNitrox</replace>
+				<replace field="type" value="18">caviumNitroxII</replace>
+				<replace field="type" value="19">caviumNitroxLite</replace>
+				<replace field="state" exitcode="1"  value="1">unknown</replace>
+				<replace field="state" exitcode="0"  value="2">ok</replace>
+				<replace field="state" exitcode="1"  value="3">disabled</replace>
+				<replace field="state" exitcode="1"  value="4">okButDiagFailed</replace>
+				<replace field="state" exitcode="1"  value="5">boot</replace>
+				<replace field="state" exitcode="1"  value="6">selfTest</replace>
+				<replace field="state" exitcode="1"  value="7">failed</replace>
+				<replace field="state" exitcode="1"  value="8">missing</replace>
+				<replace field="state" exitcode="1"  value="9">mismatchWithParent</replace>
+				<replace field="state" exitcode="1"  value="10">mismatchConfig</replace>
+				<replace field="state" exitcode="1"  value="11">diagFailed</replace>
+				<replace field="state" exitcode="1"  value="12">dormant</replace>
+				<replace field="state" exitcode="1"  value="13">outOfServiceAdmin</replace>
+				<replace field="state" exitcode="1"  value="14">outOfServiceEnvTemp</replace>
+				<replace field="state" exitcode="1"  value="15">poweredDown</replace>
+				<replace field="state" exitcode="1"  value="16">poweredUp</replace>
+				<replace field="state" exitcode="1"  value="17">powerDenied</replace>
+				<replace field="state" exitcode="1"  value="18">powerCycled</replace>
+				<replace field="state" exitcode="1"  value="19">okButPowerOverWarning</replace>
+				<replace field="state" exitcode="1"  value="20">okButPowerOverCritical</replace>
+				<replace field="state" exitcode="1"  value="21">syncInProgress</replace>
+			</replaces>
+			<output>
+				<message>{{type}}: [[{{state}}]]</message>
+			</output>
+		</item>
+	</items>
+</device>

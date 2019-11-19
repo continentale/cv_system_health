@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:Name}} is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:Name}} reported problems. please check details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:Name}} reported problems. please check details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5</value>
+		<value name="Description">1.3.6.1.2.1.1.1</value>
+	</overview>
+	<items>
+		<item title="Memory">
+			<values>
+				<value id="total" type="get">1.3.6.1.4.1.2021.4.5</value>
+				<value id="totalgb">round({{total}} /1024 / 1024 ,2) </value>
+				<value id="free" type="get">1.3.6.1.4.1.2021.4.6</value>
+				<value id="used">{{total}} - {{free}}</value>
+				<value id="usage">round( {{used}} * 100 / ({{total}}), 2)</value>
+				<value id="totalswap" type="get">1.3.6.1.4.1.2021.4.3</value>
+				<value id="freeswap" type="get">1.3.6.1.4.1.2021.4.4</value>
+				<value id="usedswap">{{totalswap}} - {{freeswap}}</value>
+				<value id="swapusage">round( {{usedswap}} * 100 / ({{totalswap}}), 2)</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 99 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 99.5 ]]></check>
+			</checks>
+			<output>
+				<message>Physical Memory ({{totalgb}} GB): Usage: [[{{usage}}]]% / swap: [[{{swapusage}}]]%</message>
+			</output>
+		</item>
+		<item title="CPU">
+			<values>
+				<value id="user" type="get">1.3.6.1.4.1.2021.11.9</value>
+				<value id="system" type="get">1.3.6.1.4.1.2021.11.10</value>
+				<value id="idle" type="get">1.3.6.1.4.1.2021.11.11</value>
+				<value id="usage">100 - {{idle}}</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 98 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 99 ]]></check>
+			</checks>
+			<output>
+				<message>CPU Usage [[{{usage}}%]] (user: {{user}} % / system: {{system}} % / idle: {{idle}} % )</message>
+			</output>
+		</item>
+		<item title="Licenses">
+			<values>
+				<value id="inuse" type="get">1.3.6.1.4.1.4329.2.18.2.2.1.5.2.2</value>
+				<value id="available" type="get">1.3.6.1.4.1.4329.2.18.2.2.1.5.2.1</value>
+				<value id="total">{{inuse}} + {{available}} </value>
+				<value id="usage">round( {{inuse}} * 100 / ({{total}}), 2)</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 95 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 99 ]]></check>
+			</checks>
+			<output>
+				<message>Licenses: [[{{usage}}%]] (Total: {{total}} - in Use: {{inuse}} - Available: {{available}})</message>
+			</output>
+			<perfdata>
+				<perfcounter>Licenses_in_Use={{inuse}};;;;</perfcounter>
+			</perfdata>
+		</item>
+	</items>
+</device>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:Name}} (SN: {{overview:SN}}) is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:Name}} (SN: {{overview:SN}}) reported problems. please check details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:Name}} (SN: {{overview:SN}}) reported problems. please check details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5.0</value>
+		<value name="Location">1.3.6.1.2.1.1.6</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="SN">1.3.6.1.4.1.2636.3.1.3</value>
+		</overview>
+	<items>
+		<item title="Sensors">
+			<values>
+				<value id="sensorstate" type="get">1.3.6.1.4.1.2636.3.1.13.1.6</value>
+				<value id="name" type="get">1.3.6.1.4.1.2636.3.1.13.1.5</value>
+			</values>
+			<replaces>
+				<replace field="sensorstate" exitcode="1" value="1">unknown</replace>
+				<replace field="sensorstate" exitcode="0" value="2">running</replace>
+				<replace field="sensorstate" exitcode="0" value="3">ready</replace>
+				<replace field="sensorstate" exitcode="1" value="4">reset</replace>
+				<replace field="sensorstate" exitcode="0" value="5">runningAtFullSpeed</replace>
+				<replace field="sensorstate" exitcode="1" value="6">down</replace>
+				<replace field="sensorstate" exitcode="0" value="7">standby</replace>
+			</replaces>
+			<output>
+				<message type="ok">{{name}}: [[{{sensorstate}}]]</message>
+				<message type="warning">{{name}}: [[{{sensorstate}}]]</message>
+				<message type="critical">{{name}}: [[{{sensorstate}}]]</message>
+			</output>
+		</item>
+		<item title="BGP">
+			<values>
+				<value id="peerstate" type="get">1.3.6.1.2.1.15.3.1.2</value>
+				<value id="identifier" type="get">1.3.6.1.2.1.15.3.1.1</value>
+				<value id="AdminState" type="get">1.3.6.1.2.1.15.3.1.3</value>
+			</values>
+			<replaces>
+				<replace field="peerstate" exitcode="0" value="1">idle</replace>
+				<replace field="peerstate" exitcode="0" value="2">connect</replace>
+				<replace field="peerstate" exitcode="0" value="3">active</replace>
+				<replace field="peerstate" exitcode="0" value="4">opensent</replace>
+				<replace field="peerstate" exitcode="0" value="5">openconfirm</replace>
+				<replace field="peerstate" exitcode="0" value="6">established</replace>
+				<replace field="AdminState" exitcode="0" value="1">stop</replace>
+				<replace field="AdminState" exitcode="0" value="2">start</replace>
+			</replaces>
+			<output>
+				<message type="ok">{{identifier}}: [[{{peerstate}}]] AdminState: {{AdminState}}</message>
+				<message type="warning">{{identifier}}: [[{{peerstate}}]] AdminState: {{AdminState}}</message>
+				<message type="critical">{{identifier}}: [[{{peerstate}}]] AdminState: {{AdminState}}</message>
+			</output>
+		</item>
+		</items>
+</device>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:Name}} is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:Name}} reported problems. please check node details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:Name}} reported problems. please check node details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.4.1.12124.1.1.1.0</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="OneFSVersion">1.3.6.1.2.1.1.1.0</value>
+	</overview>
+	<items>
+		<item title="ClusterHealth" test="1.3.6.1.4.1.12124.2.1.1">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.1.1.1</value>
+				<value id="state" type="get">1.3.6.1.4.1.12124.1.1.2</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="0" value="0">ok</replace>
+				<replace field="state" exitcode="1" value="1">attn</replace>
+				<replace field="state" exitcode="2" value="2">down</replace>
+				<replace field="state" exitcode="2" value="3">invalid</replace>
+			</replaces>
+			<output>
+				<message>{{name}} : [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Nodes" test="1.3.6.1.4.1.12124.2.1.1">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.12124.1.1.1</value>
+				<value id="configured" type="get">1.3.6.1.4.1.12124.1.1.5</value>
+				<value id="online" type="get">1.3.6.1.4.1.12124.1.1.6</value>
+			</values>
+			<output>
+				<message>Configured Nodes:{{configured}} / Online Nodes: {{online}}</message>
+			</output>
+		</item>
+		<item title="Filesystem">
+			<values>
+				<value id="used" type="get">1.3.6.1.4.1.12124.1.3.2</value>
+				<value id="total" type="get">1.3.6.1.4.1.12124.1.3.1</value>
+				<value id="usedtb">round({{used}} / 1024 / 1024 / 1024 / 1024 ,2)</value>
+				<value id="totaltb">round({{total}} / 1024 / 1024 / 1024 / 1024 ,2)</value>
+				<value id="usage"><![CDATA[ round({{usedtb}} * 100 / {{totaltb}}, 2) ]]></value>
+				<value id="warn"><![CDATA[ round({{totaltb}} / 100 * 95 , 0) ]]></value>
+				<value id="crit"><![CDATA[ round({{totaltb}} / 100 * 99.5 , 0) ]]></value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 95 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 99.9 ]]></check>
+			</checks>
+			<output>
+				<message>Usage: [[{{usage}}]]% ( Used: {{usedtb}} TB / Total: {{totaltb}} TB )</message>
+			</output>
+			<perfdata>
+				<perfcounter>Used_TB={{usedtb}};{{warn}};{{crit}};0;{{totaltb}}</perfcounter>
+			</perfdata>
+		</item>
+	</items>
+</device>

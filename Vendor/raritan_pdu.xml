@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device output="full">
+	<status>
+		<ok><![CDATA[OK: {{overview:Name}} - TYP: {{overview:Type}} - SN:{{overview:SN}}]]></ok>
+		<warning><![CDATA[WARNING{{values:load}}: {{overview:Name}} - TYP: {{overview:Type}} - SN:{{overview:SN}}]]></warning>
+		<critical><![CDATA[CRITICAL{{values:load}}: {{overview:Name}} - TYP: {{overview:Type}} - SN:{{overview:SN}} {{values:load}}]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5</value>
+		<value name="Location">1.3.6.1.2.1.1.6</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="Type">1.3.6.1.4.1.13742.4.1.1.12</value>
+		<value name="SN">1.3.6.1.4.1.13742.4.1.1.2.0</value>
+		<value name="Firmware">1.3.6.1.4.1.13742.4.1.1.1.0</value>
+	</overview>
+	<items>
+		<item title="Temperature">
+			<values>
+				<value id="temp" type="get">1.3.6.1.4.1.13742.4.1.3.1.5</value>
+				<value id="temperature">{{temp}} / 10</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{temp}} / 10 > 60 ]]></check>
+				<check type="critical"><![CDATA[ {{temp}} / 10 > 70 ]]></check>
+			</checks>
+			<output>
+				<message type="ok">[[OK]]: Temperature: {{temperature}} ° celsius</message>
+				<message type="warning">[[WARNING]]: Temperature: {{temperature}} ° celsius</message>
+				<message type="critical">[[CRITICAL]]: Temperature: {{temperature}} ° celsius</message>
+			</output>
+		</item>
+		<item title="phase load">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.13742.4.1.21.2.1.2.1</value>
+				<value id="linedata" type="get">1.3.6.1.4.1.13742.4.1.21.2.1.3.1</value>
+				<value id="data"><![CDATA[ round( {{linedata}} / 1000 , 2) ]]></value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{data}} > 12 ]]></check>
+				<check type="critical"><![CDATA[ {{data}} > 14 ]]></check>
+			</checks>
+			<output>
+				<message type="ok">Line {{name}}: [[{{data}}]] Ampere</message>
+				<message type="warning">Warning: {{name}}: [[{{data}}]] Ampere is near overload</message>
+				<message type="critical">Critical: Line {{name}}: [[{{data}}]] Ampere is near overload</message>
+			</output>
+		</item>
+		<item title="phase load-balancing">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.13742.4.1.21.2.1.2.1</value>
+				<value id="linedata" compare="true" type="get">1.3.6.1.4.1.13742.4.1.21.2.1.3.1</value>
+				<value id="data"><![CDATA[ round( {{linedata}} / 1000 , 2) ]]></value>
+			</values>
+			<checks>
+				<check id="linedata" type="warning"><![CDATA[ ({{compare-max:linedata}} / 1000)  - ({{linedata}} /1000) >  2  && ({{linedata}} /1000) > 1 ]]></check>
+				<check id="linedata" type="warning"><![CDATA[ ({{linedata}} / 1000)  - ({{compare-min:linedata}} /1000) >  2 && ({{compare-min:linedata}} / 1000) > 1 ]]></check>
+				<check id="linedata" type="warning"><![CDATA[ ({{compare-max:linedata}} / 1000)  - ({{linedata}} /1000) >  3  && ({{linedata}} /1000) > 1 ]]></check>
+				<check id="linedata" type="warning"><![CDATA[ ({{linedata}} / 1000)  - ({{compare-min:linedata}} /1000) >  3 && ({{compare-min:linedata}} /1000 ) > 1 ]]></check>
+			</checks>
+			<output>
+				<message type="ok">[[OK]]: Line {{name}}: {{data}} Ampere</message>
+				<message type="warning">[[WARNING]]: Line {{name}}: {{data}} Ampere - unbalanced</message>
+				<message type="critical">[[CRITICAL]]: Line {{name}}: {{data}} Ampere - unbalanced</message>
+			</output>
+			<header>
+				<values id="load"> - load unbalanced</values>
+			</header>
+		</item>
+		<item title="Outlets">
+			<values>
+				<value id="outletid" type="get">1.3.6.1.4.1.13742.4.1.2.2.1.1</value>
+				<value id="value" type="get">1.3.6.1.4.1.13742.4.1.2.2.1.2</value>
+			</values>
+			<output>
+				<message>{{outletid}} : {{value}} </message>
+			</output>
+			<filter>
+				<exclude field="value"></exclude>
+			</filter>
+		</item>
+	</items>
+</device>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:System}} is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:System}} reported problems. please check details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:System}} reported problems. please check details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.4.1.231.7.2.1.1.3.1.6.1</value>
+		<value name="Description">1.3.6.1.4.1.231.7.2.1.1.3.1.34.1</value>
+		<value name="System">1.3.6.1.2.1.1.6.0</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="SysPABXNumber">1.3.6.1.4.1.231.7.2.1.1.3.1.12.1</value>
+		
+	</overview>
+	<items>
+		<item title="Memory">
+			<values>
+				<value id="total" type="get">1.3.6.1.4.1.231.7.2.1.11.5.1</value>
+				<value id="used" type="get">1.3.6.1.4.1.231.7.2.1.11.5.2</value>
+				<value id="usage">round( {{used}} * 100 / ({{total}}), 2)</value>
+				<value id="swaptotal" type="get">1.3.6.1.4.1.231.7.2.1.11.5.3</value>
+				<value id="swapused" type="get">1.3.6.1.4.1.231.7.2.1.11.5.4</value>
+				<value id="swapusage">round( {{swapused}} * 100 / ({{swaptotal}}), 2)</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{usage}} > 99 ]]></check>
+				<check type="critical"><![CDATA[ {{usage}} > 99.5 ]]></check>
+			</checks>
+			<output>
+				<message>Physical Memory: [[{{usage}}]]% / swap: [[{{swapusage}}]]%</message>
+			</output>
+		</item>
+				<item title="System">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.231.7.2.1.1.3.1.6</value>
+				<value id="state" type="get">1.3.6.1.4.1.231.7.2.1.1.3.1.108</value>
+				<value id="desc" type="get">1.3.6.1.4.1.231.7.2.1.1.3.1.34</value>
+				
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">addBatchJob</replace>
+				<replace field="state" value="2" exitcode="0">online</replace>
+			</replaces>
+			<filter>
+				<exclude field="name"></exclude>
+			</filter>
+			<output>
+				<message>{{desc}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="SubSystem">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.231.7.2.1.11.20.1.2.1.2</value>
+				<value id="state" type="get">1.3.6.1.4.1.231.7.2.1.11.20.1.2.1.3</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="0">green</replace>
+				<replace field="state" value="2" exitcode="1">yellow</replace>
+				<replace field="state" value="3" exitcode="2">red</replace>
+			</replaces>
+			<filter>
+				<exclude field="name"></exclude>
+				<exclude field="name">ADS</exclude>
+			</filter>
+			<ignores>
+				<ignore field="name">CCB</ignore>
+				<ignore field="name">CCA</ignore>
+			</ignores>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Trunks">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.231.7.2.1.7.2.1.1.14</value>
+				<value id="state" type="get">1.3.6.1.4.1.231.7.2.1.7.2.1.1.10</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">no</replace>
+				<replace field="state" value="2" exitcode="0">yes</replace>
+			</replaces>
+			<filter>
+				<exclude field="name"></exclude>
+			</filter>
+			<ignores>
+				<ignore field="state">no</ignore>
+			</ignores>
+			<output>
+				<message>Trunk {{name}}: Operational:[[{{state}}]]</message>
+			</output>
+		</item>
+				<item title="BackupState">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.231.7.2.1.11.40.2.2.1.2</value>
+				<value id="date" type="get">1.3.6.1.4.1.231.7.2.1.11.40.2.2.1.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.231.7.2.1.11.40.2.2.1.4</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="0">ok</replace>
+				<replace field="state" value="2" exitcode="1">failed</replace>
+				<replace field="state" value="3" exitcode="1">unknown</replace>
+			</replaces>
+			<filter>
+				<exclude field="name"></exclude>
+			</filter>
+			<output>
+				<message>Backup Type: {{name}} ({{date}}) [[{{state}}]]</message>
+			</output>
+		</item>
+	</items>
+</device>

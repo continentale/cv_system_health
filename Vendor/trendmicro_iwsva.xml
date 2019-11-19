@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:Name}} - {{overview:Type}} ({{overview:Pattern}}) is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:Name}} reported problems. please check details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:Name}} reported problems. please check details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5</value>
+		<value name="Location">1.3.6.1.2.1.1.6</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3</value>
+		<value name="Type">1.3.6.1.4.1.6101.1.8.1.1.2.0</value>
+		<value name="Pattern">1.3.6.1.4.1.6101.1.8.1.1.4.0</value>
+	</overview>
+	<items>
+		<item title="RAM">
+			<values>
+				<value id="name" type="get">1.3.6.1.2.1.25.2.3.1.3</value>
+				<value id="aloc" type="get">1.3.6.1.2.1.25.2.3.1.4</value>
+				<value id="total" type="get">1.3.6.1.2.1.25.2.3.1.5</value>
+				<value id="used" type="get">1.3.6.1.2.1.25.2.3.1.6</value>
+				<value id="free">{{total}} - {{used}}</value>
+				<value id="totalgb">round({{total}} * {{aloc}} / 1024 /1024 ,0)</value>
+				<value id="usedgb">round({{used}} * {{aloc}}/ 1024 / 1024 ,0)</value>
+				<value id="freegb">round({{free}} * {{aloc}} / 1024 / 1024 ,0)</value>
+				<value id="usage">round({{usedgb}} * 100 / {{totalgb}}, 2)</value>
+			</values>
+			<filter>
+				<include field="name" wildcard="true">*emory*</include>
+				<include field="name" wildcard="true">*space*</include>
+			</filter>
+			<output>
+				<message>{{name}} - Usage: {{usage}}% ({{usedgb}} MB from {{totalgb}} MB used)</message>
+			</output>
+		</item>
+		<item title="Mountpoints">
+			<values>
+				<value id="name" type="get">1.3.6.1.2.1.25.2.3.1.3</value>
+				<value id="aloc" type="get">1.3.6.1.2.1.25.2.3.1.4</value>
+				<value id="total" type="get">1.3.6.1.2.1.25.2.3.1.5</value>
+				<value id="used" type="get">1.3.6.1.2.1.25.2.3.1.6</value>
+				<value id="free">{{total}} - {{used}}</value>
+				<value id="totalgb">round({{total}} * {{aloc}} / 1024 /1024 ,0)</value>
+				<value id="usedgb">round({{used}} * {{aloc}}/ 1024 / 1024 ,0)</value>
+				<value id="freegb">round({{free}} * {{aloc}} / 1024 / 1024 ,0)</value>
+				<value id="usage">round({{usedgb}} * 100 / {{totalgb}}, 2)</value>
+			</values>
+			<checks>
+				<check type="warning">{{usage}} > 80 </check>
+				<check type="warning">{{usage}} > 90 </check>
+			</checks>
+			<filter>
+				<exclude field="name" wildcard="true">*emory*</exclude>
+				<exclude field="name" wildcard="true">*space*</exclude>
+			</filter>
+			<output>
+				<message>{{name}} - Usage: [[{{usage}}]]% ({{usedgb}} MB from {{totalgb}} MB used)</message>
+			</output>
+		</item>
+		<item title="System">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.2021.2.1.2</value>
+				<value id="state" type="get">1.3.6.1.4.1.2021.2.1.100</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="0" value="0">noError</replace>
+				<replace field="state" exitcode="1" value="1">Error</replace>
+			</replaces>
+			<filter>
+				<exclude field="name" wildcard="true">*Main*</exclude>
+				<exclude field="name" wildcard="true">*postgre*</exclude>
+				<exclude field="name" wildcard="true">*squid*</exclude>
+			</filter>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="CPU">
+			<values>
+				<value id="user" type="get">1.3.6.1.4.1.2021.11.9</value>
+				<value id="system" type="get">1.3.6.1.4.1.2021.11.10</value>
+				<value id="idle" type="get">1.3.6.1.4.1.2021.11.11</value>
+			</values>
+			<checks>
+				<check type="warning"><![CDATA[ {{idle}} < 5 ]]></check>
+				<check type="critical"><![CDATA[ {{idle}} < 3 ]]></check>
+			</checks>
+			<output>
+				<message type="ok">[[OK]] CPU Usage: User {{user}}%  - System {{system}}% - Idle {{idle}}% </message>
+				<message type="warning">[[WARNING]] CPU Usage: User {{user}}%  - System {{system}}% - Idle {{idle}}% </message>
+				<message type="critical">[[CRITICAL]] CPU Usage: User {{user}}%  - System {{system}}% - Idle {{idle}}% </message>
+			</output>
+			<perfdata>
+				<perfcounter>cpu_user={{user}}%;;;;</perfcounter>
+				<perfcounter>cpu_system={{system}}%;;;;</perfcounter>
+			</perfdata>
+		</item>
+	</items>
+</device>

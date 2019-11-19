@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<status>
+		<ok><![CDATA[OK - {{overview:Name}} ({{overview:AssetTag}}) is healthy.]]></ok>
+		<warning><![CDATA[WARNING - {{overview:Name}} reported problems. please check details ...]]></warning>
+		<critical><![CDATA[CRITICAL - {{overview:Name}} reported problems. please check details ...]]></critical>
+	</status>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5.0</value>
+		<value name="Location">1.3.6.1.2.1.1.6.0</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3.0</value>
+		<value name="AssetTag">1.3.6.1.4.1.674.10892.5.1.3.2</value>
+		<value name="Datacenter">1.3.6.1.4.1.674.10892.5.1.3.8</value>
+		<value name="Model">1.3.6.1.4.1.674.10892.5.1.3.12</value>
+	</overview>
+	<url name="iDRAC" target="https://{{host}}" title="https://{{host}}"></url>
+	<items>
+		<item title="Global State">
+			<values>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.2.1</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="1" value="2">unknown</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+				<replace field="state" exitcode="1" value="4">nonCritical</replace>
+				<replace field="state" exitcode="1" value="5">critical</replace>
+				<replace field="state" exitcode="1" value="6">nonRecoverable</replace>
+			</replaces>
+			<ignores>
+				<ignore field="state" wildcard="false">critical</ignore>
+			</ignores>
+			<output>
+				<message>GlobalState: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="CPU">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.4.1100.32.1.7</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.4.1100.32.1.5</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="1" value="2">unknown</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+				<replace field="state" exitcode="1" value="4">nonCritical</replace>
+				<replace field="state" exitcode="2" value="5">critical</replace>
+				<replace field="state" exitcode="2" value="6">nonRecoverable</replace>
+			</replaces>
+
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Memory">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.4.1100.50.1.8</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.4.1100.50.1.5</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="1" value="2">unknown</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+				<replace field="state" exitcode="1" value="4">nonCritical</replace>
+				<replace field="state" exitcode="2" value="5">critical</replace>
+				<replace field="state" exitcode="2" value="6">nonRecoverable</replace>
+			</replaces>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Fans">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.4.700.12.1.8</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.4.700.12.1.5</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="1" value="2">unknown</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+				<replace field="state" exitcode="1" value="4">nonCriticalUpper</replace>
+				<replace field="state" exitcode="2" value="5">criticalUpper</replace>
+				<replace field="state" exitcode="2" value="6">nonRecoverableUpper</replace>
+				<replace field="state" exitcode="1" value="7">nonCriticalLower</replace>
+				<replace field="state" exitcode="2" value="8">CriticalLower</replace>
+				<replace field="state" exitcode="1" value="9">nonRecoverableLower</replace>
+				<replace field="state" exitcode="2" value="10">failed</replace>
+			</replaces>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Power Supplies">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.4.600.12.1.8.1</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.4.600.12.1.5.1</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+			</replaces>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Storage">
+			<values>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.2.3</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="1" value="2">unknown</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+				<replace field="state" exitcode="1" value="4">nonCritical</replace>
+				<replace field="state" exitcode="2" value="5">critical</replace>
+				<replace field="state" exitcode="2" value="6">nonRecoverable</replace>
+			</replaces>
+			<output>
+				<message>Storage: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Batteries">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.15.1.21</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.15.1.4</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">unknown</replace>
+				<replace field="state" exitcode="0" value="2">ready</replace>
+				<replace field="state" exitcode="1" value="3">failed</replace>
+				<replace field="state" exitcode="1" value="4">degraded</replace>
+				<replace field="state" exitcode="1" value="5">missing</replace>
+				<replace field="state" exitcode="0" value="6">charging</replace>
+				<replace field="state" exitcode="1" value="4">belowThreshold</replace>
+			</replaces>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Physical Disks">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.2</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.4</value>
+				<value id="vendor" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.3</value>
+				<value id="model" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.6</value>
+				<value id="sn" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.130.4.1.7</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">unknown</replace>
+				<replace field="state" exitcode="0" value="2">ready</replace>
+				<replace field="state" exitcode="0" value="3">online</replace>
+				<replace field="state" exitcode="1" value="4">foreign</replace>
+				<replace field="state" exitcode="1" value="5">offline</replace>
+				<replace field="state" exitcode="1" value="6">blocked</replace>
+				<replace field="state" exitcode="1" value="7">failed</replace>
+				<replace field="state" exitcode="0" value="8">non-raid</replace>
+				<replace field="state" exitcode="0" value="9">removed</replace>
+			</replaces>
+			<output>
+				<message>{{name}} ({{vendor}} - {{model}} - Serial Number: {{sn}}): [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="virtual Disks">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.2</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.5.1.20.140.1.1.4</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">unknown</replace>
+				<replace field="state" exitcode="0" value="2">online</replace>
+				<replace field="state" exitcode="2" value="3">failed</replace>
+				<replace field="state" exitcode="1" value="4">degraded</replace>
+			</replaces>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Network Interfaces">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.674.10892.5.4.1100.90.1.6</value>
+				<value id="connection" type="get">1.3.6.1.4.1.674.10892.5.4.1100.90.1.4</value>
+				<value id="state" type="get">1.3.6.1.4.1.674.10892.5.4.1100.90.1.3</value>
+			</values>
+			<replaces>
+				<replace field="state" exitcode="1" value="1">other</replace>
+				<replace field="state" exitcode="1" value="2">unkown</replace>
+				<replace field="state" exitcode="0" value="3">ok</replace>
+				<replace field="state" exitcode="1" value="4">nonCritical</replace>
+				<replace field="state" exitcode="1" value="5">critical</replace>
+				<replace field="state" exitcode="1" value="6">nonRecoverable</replace>
+				<replace field="connection" value="1">connected</replace>
+				<replace field="connection" value="2">disconnected</replace>
+				<replace field="connection" value="3">driverBad</replace>
+				<replace field="connection" value="4">driverDisabled</replace>
+				<replace field="connection" value="10">hardwareInitializing</replace>
+				<replace field="connection" value="11">hardwareResetting</replace>
+				<replace field="connection" value="12">hardwareClosing</replace>
+				<replace field="connection" value="13">hardwareNotReady</replace>
+			</replaces>
+			<output>
+				<message>{{name}} - {{connection}}: [[{{state}}]]</message>
+			</output>
+		</item>
+	</items>
+</device>
