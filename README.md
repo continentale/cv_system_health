@@ -1,8 +1,9 @@
 # cv_system_health
 
-A php based nagios / icinga / naemon compliant health check for various snmp devices. The main goal of this project aims to be easily extendable by adding simple xml files to the check in order to check new hardware. The check supports SNMPv3 (currently only authPriv is supported), SNMPv2c and SNMPv1. 
+A php based nagios / icinga / naemon compliant health check for various snmp devices. The main goal of this project aims to be easily extendable by adding simple xml files to the check in order to check new hardware,  therefore contributions are welcome. The check supports SNMPv3 (currently only authPriv is supported), SNMPv2c and SNMPv1. 
 
 It is possible to add custom MIB files to the Vendor/Mibs folder in order to use Short OID names, however the numeric OID is prefered due to performance reasons.
+
 
 ### system requirements
 - php5 / php7 with mod_snmp, mod_xml enabled
@@ -10,17 +11,17 @@ It is possible to add custom MIB files to the Vendor/Mibs folder in order to use
 ### Usage examples
 
 ##### SNMPV1
-´´´ ./cv_system_health -h=10.10.0.1 -C=public -v1´´´
+``` ./cv_system_health -h=10.10.0.1 -C=public -v1```
 
 ##### SNMP V2
-´´´ ./cv_system_health -h=10.10.0.1 -C=public ´´´
+``` ./cv_system_health -h=10.10.0.1 -C=public ```
 
 ##### SNMP V3
-´´´ ./cv_system_health -h=10.10.0.1 -u=snmpusername -p=password -e=SHA -E=AES´´´
+``` ./cv_system_health -h=10.10.0.1 -u=snmpusername -p=password -e=SHA -E=AES ```
 
 
 ##### SNMP V3 with custom xml file to load
-´´´ ./cv_system_health -h=10.10.0.1 -u=snmpusername -p=password -e=SHA -E=AES --xml=msycustom.xml´´´
+``` ./cv_system_health -h=10.10.0.1 -u=snmpusername -p=password -e=SHA -E=AES --xml=msycustom.xml ```
 
 ### supperted systems / devices
 there are various devices supported such as
