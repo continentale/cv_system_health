@@ -48,4 +48,4 @@ PanDaCom Multiplexer with various modules
 PolyCom Real Presence Access Director
 
 ##### Storage Systems
-EMC Isilon Cluster (CLuster and Sigle nodes)
+EMC Isilon Cluster (Cluster and Single nodes)
