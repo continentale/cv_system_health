@@ -918,11 +918,9 @@ class Device
 	/**
 	* Determine the exit code of the device, highest value wins..
 	*/
-	private function _exit_code()
-	{
+	private function _exit_code() {
 		$codes = array_value_recursive('exit_code', $this->device);
 
-		
 		if (is_array($codes) && count($codes) > 1)
 			return max($codes);
 
@@ -933,8 +931,7 @@ class Device
 			return 0;
 	}
 
-	private function _hide_status($tree)
-	{
+	private function _hide_status($tree) {
 		$codes = array_value_recursive('hide', $tree);
 
 		if (is_array($codes) && count($codes) > 1)
@@ -949,18 +946,14 @@ class Device
 	/**
 	* Render the output of our check
 	*/
-	public function Render()
-	{
+	public function Render() {
 		echo $this->check['statusmessage'];
 		// Basic Infos ausgeben
-		if (isset($this->device['overview']))
-		{
+		if (isset($this->device['overview'])) {
 			echo "\n";
 
-			foreach ($this->device['overview'] as $key => $val)
-			{
-				foreach ($val as $value)
-				{
+			foreach ($this->device['overview'] as $key => $val)	{
+				foreach ($val as $value) {
 					if (strtolower($key) == 'uptime')
 						echo ucfirst($key) . ': ' . uptime($value) . "<br>";
 					elseif (strtolower($key) == 'link')
@@ -974,21 +967,17 @@ class Device
 		if (isset($this->device['url']))
 			echo $this->device['url']['name'] . ': <strong><a style="color: #5f6268;" target="_blank" href="' . $this->device['url']['target'] . '">' . $this->device['url']['title'] . '</a></strong>';
 
-		if (isset($this->device['items']))
-		{
-			foreach ($this->device['items'] as $item_key => $item_value)
-			{
+		if (isset($this->device['items'])) {
+			foreach ($this->device['items'] as $item_key => $item_value) {
 			
 				if (count($this->device['items']) > 1 && !empty($item_value['name']))
 					echo "<br><br>" . '<div style="width: 98%; border-bottom: 1px solid #bbb; background-color: #eee; padding: 1px;"><strong> ' . $item_value['name'] . ' ' . $item_key . '</strong></div>';
 				
-				foreach ($item_value['items'] as $ikey => $ivalue)
-				{
+				foreach ($item_value['items'] as $ikey => $ivalue) {
 					$hide = false;
 					$stacked = false;
 					
-					foreach ($ivalue as $ikkey => $ikvalue)
-					{
+					foreach ($ivalue as $ikkey => $ikvalue)	{
 						if(isset($ikvalue['hide']) && $ikvalue['hide'] == true)
 							$hide = true;
 
@@ -1000,10 +989,8 @@ class Device
 
 					echo '<div style="width: 98%; border-bottom: 1px solid #bbb;"><strong>' . $ikey. '</strong></div>' . "";
 
-					foreach ($ivalue as $ikkey => $ikvalue)
-					{
-						if (next($ivalue) == true)
-						{
+					foreach ($ivalue as $ikkey => $ikvalue)	{
+						if (next($ivalue) == true) {
 							if($stacked == true)
 								echo $ikvalue['output'] . " / ";
 							else
@@ -1017,13 +1004,10 @@ class Device
 		}
 	}
 
-	public function RenderPerfData()
-	{
-		if(isset($this->check['perfdata']))
-		{
+	public function RenderPerfData() {
+		if(isset($this->check['perfdata']))	{
 			echo ' |';
-			foreach ($this->check['perfdata'] as $perfdata)
-			{
+			foreach ($this->check['perfdata'] as $perfdata)	{
 				echo ' \'' . $perfdata['name'] .  '\'=' . $perfdata['value'] . ';';
 					echo isset ($perfdata['warn']) ? $perfdata['warn'] . ';' : ';';
 					echo isset($perfdata['crit']) ? $perfdata['crit']. ';' : ';';
@@ -1035,13 +1019,11 @@ class Device
 		return false;
 	}
 
-	private function _setName()
-	{
+	private function _setName()	{
 		return @$this->session->get('1.3.6.1.2.1.1.5.0');
 	}
 
-	private function _setVendor()
-	{
+	private function _setVendor() {
 		$vendor = @$this->session->get('1.3.6.1.2.1.1.2.0');
 		$vendor = str_replace('SNMPv2-SMI::enterprises.', '', $vendor);
 		$vendor = str_replace('iso.3.6.1.4.1.', '', $vendor);
@@ -1049,24 +1031,20 @@ class Device
 		return $vendor;
 	}
 	
-	private function _detectVendor($oid)
-	{
+	private function _detectVendor($oid) {
 		$found = @$this->session->get($oid);
 		return !empty($found) ? true: false;
 	}
 
-	private function _setLocation()
-	{
+	private function _setLocation()	{
 		return @$this->session->get('1.3.6.1.2.1.1.6.0');
 	}
 
-	private function _setUptime()
-	{
+	private function _setUptime() {
 		return @$this->session->get('1.3.6.1.2.1.1.3.0');
 	}
 
-	private function _getParams()
-	{
+	private function _getParams() {
 		$context = array();
 		$warn = 90;
 		$crit = 95;
@@ -1074,14 +1052,12 @@ class Device
 
 		$options = getopt("h:u::C::v::p::e::E::c::w::a::", array("host:", "community::", "version::", "user::", "password:", "encrypt::", "private_encrypt::", "warning::", "critical::", "arguments::", "debug::", "xml::"));
 
-		// keine Optionen angegeben? Hilfe ausgeben
-		if(count($options) == 0)
-		{
+		// no options set?
+		if(count($options) == 0) {
 			printCheckHelp();
 			exit(0);
 		}
-		if(!isset($options['host']) && !isset($options['h']))
-		{
+		if(!isset($options['host']) && !isset($options['h'])) {
 			echo "parameter -h || --host (Hostname of the snmp target) is missing \n";
 			exit(0);
 		}
@@ -1089,25 +1065,22 @@ class Device
 		$context['debug'] = isset($options['debug']) ? true : false;
 		$context['xml'] = isset($options['xml']) ? $options['xml'] : false;
 
-		if(isset($options['user']) || isset($options['u']))
-		{
+		if(isset($options['user']) || isset($options['u']))	{
 			$context['version'] = 'VERSION_3';
 
-			if(!isset($options['password']) && !isset($options['p']))
-			{
+			if(!isset($options['password']) && !isset($options['p'])) {
 				echo "parameter -p || --password is missing \n";
 				exit(0);
 			}
-			if(!isset($options['encrypt']) && !isset($options['e']))
-			{
+			if(!isset($options['encrypt']) && !isset($options['e'])) {
 				echo "parameter -e || --encrypt (The prefered encryption_mode usually SHA or MD5) is missing \n";
 				exit(0);
 			}
-			if(!isset($options['private_encrypt']) && !isset($options['E']))
-			{
+			if(!isset($options['private_encrypt']) && !isset($options['E'])) {
 				echo "parameter -E || --private_encrypt (The prefered private_encryption_mode usually AES or DES) is missing \n";
 				exit(0);
 			}
+
 			$context['user'] = isset($options['user']) ? $options['user'] : $options['u'];
 			$context['password'] = isset($options['password']) ? $options['password'] : $options['p'];
 			$context['encrypt'] = isset($options['encrypt']) ? $options['encrypt'] : $options['e'];
@@ -1115,10 +1088,8 @@ class Device
 			$context['type'] = 'authPriv';
 		}
 
-		elseif (isset($options['community']) || isset($options['C']))
-		{
-			if(isset($options['version']) || isset($options['v']))
-			{
+		elseif (isset($options['community']) || isset($options['C'])) {
+			if(isset($options['version']) || isset($options['v'])) {
 				$context['v'] = isset($options['v']) ? $options['v'] : $options['version'];
 				if ($context['v'] == '1')
 					$context['version'] = 'VERSION_1';
@@ -1131,8 +1102,7 @@ class Device
 			$context['community'] =  isset($options['C']) ? $options['C'] : $options['community'];
 		}
 
-		if(!isset($options['user']) && !isset($options['u']) && !isset($options['C']) && !isset($options['community']))
-		{
+		if(!isset($options['user']) && !isset($options['u']) && !isset($options['C']) && !isset($options['community']))	{
 			echo "parameter -u || --user or -C || --community is missing. Please use either -C for SNMPv2c, -C and -v1 for SNMPv1 or -u for SNMPv3\n";
 			exit(0);
 		}
@@ -1147,10 +1117,8 @@ class Device
 		return $context;
 	}
 
-	private function _initSNMPSession ($snmp)
-	{
-		if ($snmp['version'] == 'VERSION_3')
-		{
+	private function _initSNMPSession ($snmp) {
+		if ($snmp['version'] == 'VERSION_3') {
 			$session = new SNMP(SNMP::VERSION_3, $snmp['host'], $snmp['user']);
 			$session->setSecurity($snmp['type'], $snmp['encrypt'], $snmp['password'] , $snmp['private_encrypt'], $snmp['password']);
 		}
@@ -1166,8 +1134,7 @@ class Device
 		$test = @$session->get('1.3.6.1.2.1.1.5.0');
 		$error = $session->getError();
 
-		if (!empty($error))
-		{
+		if (!empty($error)) {
 			echo 'UNKNOWN: ' . $error . ' - Icinga Worker: ' . gethostname() . "\n";
 			exit(3);
 		}
@@ -1175,21 +1142,17 @@ class Device
 			return $session;
 	}
 
-	private function _closeSession($session)
-	{
+	private function _closeSession($session) {
 		 $session->close();
 	}
-	protected function _snmpIndex($data, $array, $field, $group = false)
-	{
+	protected function _snmpIndex($data, $array, $field, $group = false) {
 		if (empty($data))
 			return $array;
 
-		foreach ($data as $key=>$value)
-		{
+		foreach ($data as $key=>$value)	{
 			$indexes = explode('.', $key);
 			$i = array_slice($indexes, -1, 1);
-			if ($group)
-			{
+			if ($group)	{
 				$grp = substr($i[0],0, -2);
 				$array[$grp][$i[0]][$field] = $value; 
 			}
@@ -1199,44 +1162,35 @@ class Device
 		return $array;
 	}
 
-	protected function _snmpGroup($data, $array, $field, $group = false, $use_index = false, $group_key = 1)
-	{
+	protected function _snmpGroup($data, $array, $field, $group = false, $use_index = false, $group_key = 1) {
 		if (empty($data))
 			return $array;
 
-		foreach ($data as $key=>$value)
-		{
+		foreach ($data as $key=>$value)	{
 			$indexes = explode('.', $key);
 
-			if ($group)
-			{
-				if ($use_index && $use_index == $indexes[1])
-				{
+			if ($group)	{
+				if ($use_index && $use_index == $indexes[1]) {
 					$grp = round($indexes[0], -1, PHP_ROUND_HALF_DOWN);
 					$array[$grp][$key][$field] = $value; 
 				}
-				elseif ($use_index && $use_index != $indexes[1])
-				{
+				elseif ($use_index && $use_index != $indexes[1]) {
 					continue;
 				}
-				else
-				{
+				else {
 					$grp = round($indexes[0], -1, PHP_ROUND_HALF_DOWN);
 					$array[$grp][$key][$field] = $value; 
 				}
 			}
 			else
 			{
-				if ($use_index && $use_index == $indexes[1])
-				{
+				if ($use_index && $use_index == $indexes[1]) {
 					$array[$group_key][$key][$field] = $value; 
 				}
-				elseif ($use_index && $use_index != $indexes[1])
-				{
+				elseif ($use_index && $use_index != $indexes[1]) {
 					continue;
 				}
-				else
-				{
+				else {
 					$array[$group_key][$key][$field] = $value; 
 				}
 			}
@@ -1245,51 +1199,41 @@ class Device
 		return $array;
 	}
 
-	private function _loadCustomXML($file)
-	{
-		if (file_exists(__DIR__ . '/Vendor/'. $file))
-			{
+	private function _loadCustomXML($file) {
+		if (file_exists(__DIR__ . '/Vendor/'. $file)) {
 				$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/'. $file, 'SimpleXMLElement', LIBXML_NOCDATA);
 				$this->Vendor = 'GenericDevice';
 				$this->cn = 'XML-' . chopExtension($file);
 
 				return $vendorfile;
 			}
-			else
-			{
+			else {
 				echo 'XML file: ' . $file . ' not found!';
 				exit(3);
 			}
 	}
-	private function _loadVendorXML()
-	{
+	private function _loadVendorXML() {
 		$file =  __DIR__ . '/Vendor/devices.xml';
 		$devices = simplexml_load_file($file, 'SimpleXMLElement', LIBXML_NOCDATA);
 
-		foreach ($devices->children() as $devlist)
-		{
-			foreach ($devlist->children() as $types)
-			{
+		foreach ($devices->children() as $devlist)	{
+			foreach ($devlist->children() as $types) {
 				$is_vendor = $this->_detectVendor($types['detect']);
-				if ($is_vendor)
-				{
+				if ($is_vendor)	{
 					$this->cn = 'XML-' . chopExtension($types['file']);
 					$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/'. $types['file'], 'SimpleXMLElement', LIBXML_NOCDATA);
 					$this->Vendor = (string) $types['vendor'];
 				}
 			}
-			if (empty($vendorfile))
-			{
-				if ($devlist['enterpriseoid'] == $this->_setVendor() && isset($devlist['file']))
-				{
+			if (empty($vendorfile))	{
+				if ($devlist['enterpriseoid'] == $this->_setVendor() && isset($devlist['file'])) {
 					$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/'. $devlist['file'], 'SimpleXMLElement', LIBXML_NOCDATA);
 					$this->cn = 'XML-' .chopExtension($devlist['file']);
 					$this->Vendor =  $this->_setVendor();
 				}
 			}
 		}
-		if (empty($vendorfile))
-		{
+		if (empty($vendorfile))	{
 			$vendorfile = simplexml_load_file(__DIR__ . '/Vendor/genericdevice.xml', 'SimpleXMLElement', LIBXML_NOCDATA);
 			$this->Vendor = 'GenericDevice';
 		}
@@ -1297,17 +1241,14 @@ class Device
 		return $vendorfile;
 	}
 
-	private function _loadMibs($mibs)
-	{
+	private function _loadMibs($mibs) {
 		$generic_mibs = array_diff(scandir(__DIR__ . '/Vendor/mibs/generic/'), array('..', '.'));
 
 		foreach ($generic_mibs as $mib_file)
 			snmp_read_mib(__DIR__ . '/Vendor/mibs/generic/' . $mib_file);
 
-		if ($mibs->children())
-		{
-			foreach($mibs->children() as $mib)
-			{
+		if ($mibs->children()) {
+			foreach($mibs->children() as $mib) {
 				if (file_exists(__DIR__ . '/Vendor/mibs/' . $mib))
 					snmp_read_mib(__DIR__ . '/Vendor/mibs/' . $mib);
 			}
@@ -1315,8 +1256,7 @@ class Device
 	}
 }
 
-function formatStatus ($txt, $exit_code = 4)
-{
+function formatStatus ($txt, $exit_code = 4) {
 	$green = '#66bb6a';
 	$red = '#f0666c';
 	$orange = '#ffe57b';
@@ -1337,20 +1277,18 @@ function formatStatus ($txt, $exit_code = 4)
 	return $output;
 }
 
-function formatOutput ($txt, $type)
-{
+function formatOutput ($txt, $type) {
 	$txt = trim($txt);
+
 	if ($type == 'header')
 		return '<div style="width: 98%; border-bottom: 1px solid #bbb;"><strong>' . $txt . '</strong></div>';
 	elseif ($type == 'bold' || $type == 'subheader')
 		return '<strong>' . $txt . '</strong>';
 	else
 		return $txt;
-	
 }
 
-function set_exit_code($array)
-{
+function set_exit_code($array) {
 	$codes = array_value_recursive('exit_code', $array);
 	return max($codes);
 }
@@ -1362,8 +1300,7 @@ function set_exit_code($array)
  *
  * @return null|string|array
  */
-function array_value_recursive($key, array $arr)
-{
+function array_value_recursive($key, array $arr) {
     $val = array();
     array_walk_recursive($arr, function ($v, $k) use ($key, &$val) {
         if ($k == $key) array_push($val, $v);
@@ -1372,11 +1309,8 @@ function array_value_recursive($key, array $arr)
 }
 
 
-
-function snmptable($input, $raw, $index_key, $field, $caption= 'name') 
-{
-	foreach ($raw as $key => $value)
-	{
+function snmptable($input, $raw, $index_key, $field, $caption= 'name') {
+	foreach ($raw as $key => $value) {
 		$indexes= explode(".", $key);
 		
 		if (!in_array($field, $indexes))
@@ -1384,30 +1318,25 @@ function snmptable($input, $raw, $index_key, $field, $caption= 'name')
 
 		array_shift($indexes);
 		
-		$input[$indexes[$index_key]][$caption] = (string) $value;
-		
+		$input[$indexes[$index_key]][$caption] = (string) $value;	
 	}
 	return $input;
 }
 
-function snmpindextable($input, $raw, $index_key, $field, $caption= 'name') 
-{
+function snmpindextable($input, $raw, $index_key, $field, $caption= 'name') {
 	
 	$result = array();
 	$data = array();
-	foreach($raw as $path => $value)
-	{
+	foreach($raw as $path => $value) {
 		$temp = &$result;
 		foreach(explode('.', $path) as $key)
-		{
 			$temp =& $temp[$key];
-		}
+
 		$temp = $value;
 	}
 	
 	
-	foreach($result as $rkey => $rvalue)
-	{	
+	foreach($result as $rkey => $rvalue) {	
 		$data[$rkey][$caption] = $rvalue[$field];
 	}
 	
@@ -1415,8 +1344,7 @@ function snmpindextable($input, $raw, $index_key, $field, $caption= 'name')
 
 }
 
-function calculate ($var, $calc, $total = false)
-{
+function calculate ($var, $calc, $total = false) {
 		$c = str_replace('{{value}}', $var, $calc);
 		$c = str_replace('{{total}}', $total, $c);
 		$result = '';
@@ -1424,13 +1352,12 @@ function calculate ($var, $calc, $total = false)
 
 		return $result;
 }
-function calculateUsage ($used, $total)
-{
+
+function calculateUsage ($used, $total) {
 		return $used * 100 / $total;
 }
 
-function calcExit($var, $string, $total = false)
-{
+function calcExit($var, $string, $total = false) {
 	$var = strip_tags($var);
 	$string = strip_tags($string);
 	$string = str_replace('{{value}}', $var, $string);
@@ -1448,8 +1375,7 @@ function calcExit($var, $string, $total = false)
 		return $result;
 }
 
-function calcWarnCrit($var, $string, $total = false)
-{
+function calcWarnCrit($var, $string, $total = false) {
 	$var = strip_tags($var);
 	$string = strip_tags($string);
 	$string = str_replace('{{value}}', $var, $string);
@@ -1464,8 +1390,7 @@ function calcWarnCrit($var, $string, $total = false)
 	return $result;
 }
 
-function compareValues ($ar, $warn, $crit)
-{
+function compareValues ($ar, $warn, $crit) {
 	$min = min ($ar);
 	$max = max ($ar);
 	
@@ -1477,8 +1402,7 @@ function compareValues ($ar, $warn, $crit)
 	return 0;
 }
 
-function compareVal($array, $string)
-{
+function compareVal($array, $string) {
 	$string = strip_tags($string);
 	
 	$string = str_replace('{{min:value}}', min($array), $string);
@@ -1498,8 +1422,7 @@ function compareVal($array, $string)
 	return $result;
 }
 
-function uptime($date)
-{
+function uptime($date) {
 	date_default_timezone_set('UTC');
 	$value = time() - ($date / 100);
 	$start = date_create(date('Y-m-d', $value));
@@ -1511,93 +1434,75 @@ function uptime($date)
 
 
 
-function chopExtension($filename) 
-{
+function chopExtension($filename) {
     return pathinfo($filename, PATHINFO_FILENAME);
 }
 
-function strposArray($haystack, $needle, $offset = 0)
-{
+function strposArray($haystack, $needle, $offset = 0) {
     if(!is_array($needle)) 
 		$needle = array($needle);
 	
-    foreach($needle as $query) 
-	{
+    foreach($needle as $query) {
         if(strpos($haystack, $query, $offset) !== false) 
 			return true; // stop on first true result
     }
     return false;
 }
 
-function striposArray($haystack, $needle, $offset = 0)
-{
+function striposArray($haystack, $needle, $offset = 0) {
     if(!is_array($needle)) 
 		$needle = array($needle);
-	
-    foreach($needle as $query) 
-	{
+
+    foreach($needle as $query) {
         if(stripos($haystack, $query, $offset) !== false) 
 			return true; // stop on first true result
     }
     return false;
 }
 
-function extractStringBetween($cFirstChar, $cSecondChar, $sString)
-{
+function extractStringBetween($cFirstChar, $cSecondChar, $sString) {
 	preg_match_all("/\\".$cFirstChar."(.*?)\\".$cSecondChar."/", $sString, $aMatches);
 	return $aMatches[1];
-
 }
-function extractOutput($sString)
-{
+
+function extractOutput($sString) {
 	preg_match_all("/\[\[(.*?)\]\]/", $sString, $aMatches);
 	return $aMatches[1];
 }
 
-function extractOutputID($sString)
-{
+function extractOutputID($sString) {
 	$output = array();
-
 	preg_match_all("/\[\[(.*?)\]\]/", $sString, $aMatches);
-
-	foreach ($aMatches[1]as $match)
-	
-	if (strpos($match, ':') !== false) 
-	{
-		$ex = explode(':', $match);
-		$output[$ex[0]] = $ex[1];
+	foreach ($aMatches[1]as $match) {
+		if (strpos($match, ':') !== false) {
+			$ex = explode(':', $match);
+			$output[$ex[0]] = $ex[1];
+		}
 	}
-		return $output;
+	return $output;
 }
 
-
-function in_array_any($needles, $haystack) 
-{
+function in_array_any($needles, $haystack) {
    return !!array_intersect($needles, $haystack);
 }
 
-function rec_array_replace ($find, $replace, $array)
-{
-    if (! is_array($array)) {
-		
+function rec_array_replace ($find, $replace, $array) {
+    if (! is_array($array)) {		
         return str_replace($find, $replace, $array);
     }
  
     $newArray = array();
- 
-    foreach ($array as $key => $value) {
+     foreach ($array as $key => $value) {
         $newArray[$key] = rec_array_replace($find, $replace, $value);
     }
  
     return $newArray;
 }
 
-function array_to_hex($ar)
-{
+function array_to_hex($ar) {
 	$nar = array();
 	
-	foreach ($ar as $key => $value)
-	{
+	foreach ($ar as $key => $value)	{
 		$nar[$key] = bin2hex($value);
 	}
 
