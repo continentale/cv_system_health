@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<device>
+	<overview>
+		<value name="Name">1.3.6.1.2.1.1.5</value>
+		<value name="Location">1.3.6.1.2.1.1.6</value>
+		<value name="Uptime">1.3.6.1.2.1.1.3</value>
+	</overview>
+	<items>
+		<item title="CPU Usage">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.5951.4.1.1.41.6.1.1</value>
+				<value id="usage" type="get">1.3.6.1.4.1.5951.4.1.1.41.6.1.2</value>
+			</values>
+			<checks>
+				<check id="usage" type="warning"><![CDATA[ {{usage}} > 95 ]]></check>
+				<check id="usage" type="critical"><![CDATA[ {{usage}} > 97 ]]></check>
+			</checks>
+			<output>
+				<message>CPU Usage ({{name}}): [[{{usage}}%]]</message>
+			</output>
+			<perfdata>
+				<perfcounter>CPU_{{name}}={{usage}};95;97;0;100</perfcounter>
+			</perfdata>
+		</item>
+			<item title="Memory">
+			<values>
+				<value id="usage" type="get">1.3.6.1.4.1.5951.4.1.1.41.2</value>
+			</values>
+			<checks>
+				<check id="usage" type="warning"><![CDATA[ {{usage}} > 95 ]]></check>
+				<check id="usage" type="critical"><![CDATA[ {{usage}} > 97 ]]></check>
+			</checks>
+			<output>
+				<message>RAM Usage: [[{{usage}}%]]</message>
+			</output>
+			<perfdata>
+				<perfcounter>RAM={{usage}};95;97;0;100</perfcounter>
+			</perfdata>
+		</item>
+		<item title="HA Status / Node Type">
+			<values>
+				<value id="type" type="get">1.3.6.1.4.1.5951.4.1.1.23.3</value>
+				<value id="state" type="get">1.3.6.1.4.1.5951.4.1.1.23.24</value>
+			</values>
+			<replaces>
+				<replace field="type" value="0">standalone</replace>
+				<replace field="type" value="1">primary</replace>
+				<replace field="type" value="2">secondary</replace>
+				<replace field="type" value="3">unknown</replace>
+				<replace field="state" value="0" exitcode="1">unkown</replace>
+				<replace field="state" value="1" exitcode="1">init</replace>
+				<replace field="state" value="2" exitcode="2">down</replace>
+				<replace field="state" value="3" exitcode="0">up</replace>
+				<replace field="state" value="4" exitcode="1">partialFail</replace>
+				<replace field="state" value="5" exitcode="1">monitorFail</replace>
+				<replace field="state" value="6" exitcode="0">monitorOK</replace>
+				<replace field="state" value="7" exitcode="2">completeFail</replace>
+				<replace field="state" value="8" exitcode="1">dumb</replace>
+				<replace field="state" value="9" exitcode="0">disabled</replace>
+				<replace field="state" value="10" exitcode="1">partialFailSsl</replace>
+				<replace field="state" value="11" exitcode="1">routeMonitorFail</replace>
+			</replaces>
+			<output>
+				<message>{{type}} node: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="Server Monitor" stacked="true">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.5951.4.1.2.2.1.1</value>
+				<value id="state" type="get">1.3.6.1.4.1.5951.4.1.2.2.1.3</value>
+			</values>
+			<replaces>
+				<replace field="state" value="2" exitcode="1">unkown</replace>
+				<replace field="state" value="3" exitcode="1">busy</replace>
+				<replace field="state" value="4" exitcode="1">outOfService</replace>
+				<replace field="state" value="5" exitcode="1">transitionToOutOfService</replace>
+				<replace field="state" value="7" exitcode="0">up</replace>
+				<replace field="state" value="8" exitcode="1">transitionToOutOfServiceDown</replace>
+			</replaces>
+			<filter>
+				<exclude field="name" wildcard="true">*vpnd*</exclude>
+				<exclude field="name" wildcard="true">*intern*</exclude>
+			</filter>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+		<item title="VServer" stacked="true">
+			<values>
+				<value id="name" type="get">1.3.6.1.4.1.5951.4.1.3.1.1.1</value>
+				<value id="state" type="get">1.3.6.1.4.1.5951.4.1.3.1.1.5</value>
+			</values>
+			<replaces>
+				<replace field="state" value="1" exitcode="1">down</replace>
+				<replace field="state" value="2" exitcode="1">unknown</replace>
+				<replace field="state" value="3" exitcode="1">busy</replace>
+				<replace field="state" value="4" exitcode="1">outOfService</replace>
+				<replace field="state" value="5" exitcode="1">transitionToOutOfService</replace>
+				<replace field="state" value="7" exitcode="0">up</replace>
+				<replace field="state" value="8" exitcode="1">transitionToOutOfServiceDown</replace>
+			</replaces>
+			<filter>
+				<exclude field="name" wildcard="true">*XML5*</exclude>
+				<exclude field="name" wildcard="true">*Redirect*</exclude>
+				<exclude field="name" wildcard="true">*REDIRECT*</exclude>
+			</filter>
+			<output>
+				<message>{{name}}: [[{{state}}]]</message>
+			</output>
+		</item>
+	</items>
+</device>
