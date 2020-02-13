@@ -680,9 +680,6 @@ class Device
 			die();
 		}
 
-		if ($this->store == true && count($this->tracking) > 0)
-			$this->updateDB($this->tracking);
-
 		$this->check['status'] = $this->_exit_code();
 
 		if (isset($this->check['message']) && isset($this->check['status']))
